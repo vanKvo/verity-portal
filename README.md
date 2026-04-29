@@ -2,6 +2,8 @@
 
 Verity Portal is a production-grade internal tool designed to solve the "Excel Engineering" crisis within complex corporate environments (e.g., defense and aerospace). The platform provides a centralized hub for reconciling disconnected data silos (HR, IT, Finance) and automating the identification of high-stakes compliance violations, providing a "Single Source of Truth."
 
+![Project Screenshot](images/verity-login-page.png)
+
 ## Key Features & Impacts
 * **Intelligent Data Mapping:** A Shared Mapper Engine utilizing fuzzy logic (`thefuzz`) to intelligently suggest pairings between messy legacy spreadsheet headers and standardized system attributes, drastically reducing manual data cleaning time.
 * **ITAR & Export Control Automation:** Reconciles personnel and project data to ensure restricted data is only accessed by eligible citizens, preventing ITAR/EAR violations.
