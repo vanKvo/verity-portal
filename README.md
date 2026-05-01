@@ -1,6 +1,8 @@
 # Verity Portal
 
-Verity Portal is a production-grade internal tool designed to solve the "Excel Engineering" crisis within complex corporate environments (e.g., defense and aerospace). The platform provides a centralized hub for reconciling disconnected data silos (HR, IT, Finance) and automating the identification of high-stakes compliance violations, providing a "Single Source of Truth."
+Verity Portal is a production-grade compliance platform that eliminates the risks of “Excel engineering” for organizations with strict compliance and audit requirements, where manual reconciliation of siloed data (HR, IT, Finance, Security) leads to errors, security gaps, and audit exposure. The system ingests structured data sources (.csv/.xlsx), validates and stages them, and applies a domain-driven reconciliation engine to cross-reference records against a centralized single source of truth, proactively flagging violations such as export control breaches, expired security training, and unauthorized system access. 
+
+Designed using hexagonal architecture to isolate core compliance logic from infrastructure, enabling extensibility and testability of validation rules. Built with Python (FastAPI), PostgreSQL and Angular, and deployed via Docker on AWS App Runner with RDS, delivering a scalable, low-ops solution that reduces manual compliance effort and enables early detection of audit-critical risks.
 
 ![Project Screenshot](images/verity-login-page.png)
 
