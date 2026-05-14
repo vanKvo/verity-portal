@@ -1,0 +1,89 @@
+VERITY PORTAL
+1. EXECUTIVE SUMMARY
+Verity Portal is a production-grade internal tool designed to solve the "Excel Engineering" crisis
+within complex corporate environments, such as defense and aerospace. The platform provides a
+centralized hub for reconciling disconnected data silos (HR, IT, Finance) and identifying high-
+stakes compliance violations. Built on Hexagonal Architecture, Verity Portal ensures that core
+business logic is isolated, durable, and auditor-ready. 
+2. BUSINESS PROBLEM & OBJECTIVES
+2.1 The Problem
+Current back-office operations rely on manual spreadsheet cross-referencing (VLOOKUPs/Stare-
+and-Compare). This process is:
+Error-Prone: Human error leads to ITAR, CMMC, and financial billing violations.
+Inconsistent: Fragmented data sources (Silos) result in conflicting records.
+Inefficient: Thousands of hours are lost to manual data cleaning and reconciliation.
+2.2 Key Objectives
+Automate the identification of compliance gaps (ITAR, Security Clearance, Billing).
+Establish a "Single Source of Truth" by bridging disparate data silos.
+Provide non-editable, auditor-ready PDF reports to satisfy federal requirements (CMMC/ITAR).
+Business Specification Document: Data Integrity & Compliance Engine
+• 
+• 
+• 
+• 
+• 
+• 
+1
+3. PRODUCT SCOPE: THE HIGH-IMPACT FIVE
+Scenario Business Value Compliance Target
+ITAR & Export ControlEnsures restricted data is only accessed by
+eligible citizens.
+ITAR / EAR
+Clearance & Training
+Watchdog
+Prevents work on contracts without valid
+security credentials.
+Gov. Security
+Standards
+Leaver/Mover Audit Identifies unauthorized system logins post-
+termination.
+CMMC 2.0
+(AC.L2-3.1.4)
+IT Asset & PO Audit Matches procurement spend to physical
+inventory in use.
+Financial
+Stewardship
+Labor Billing Audit Ensures billed labor categories match
+contractual mandates.
+DCAA / Contract Law
+4. FUNCTIONAL REQUIREMENTS
+4.1 Intelligent Mapping (Input)
+The system shall provide a Shared Mapper Engine that allows users to link "messy" legacy
+spreadsheet headers to standardized system attributes. It must utilize fuzzy matching logic to
+suggest potential pairings (e.g., "Emp_ID" to "Employee_ID").
+4.2 Compliance Core (Processing)
+The Domain Layer shall process uploads using isolated business rules. It must detect
+mismatches between "Source of Truth" files (e.g., HR Master) and "Activity" files (e.g., Access
+Logs).
+4.3 Resolution & Export (Output)
+Compliance Dashboard: Visual indicators for high-risk violations.
+PDF Audit Defense: Formal reports summarizing the audit logic and results for federal
+examiners.
+Sanitized CSV: A downloadable file containing only verified rows for back-system updates.
+• 
+• 
+• 
+2
+5. TECHNICAL ARCHITECTURE & CONSTRAINTS
+Architecture Model: Hexagonal (Ports & Adapters) 
+Frontend: Angular 17+ (High-density, professional Material Design).
+Backend: Python 3.11+ (FastAPI for speed, Pandas for data processing).
+Integration: File-based ingestion (CSV/XLSX) to support air-gapped/firewalled environments.
+Theme: BAE Navy (#002244) primary with high-contrast functional color tokens.
+6. NOT DOING (STRATEGIC OUT-OF-SCOPE)
+Real-time API Writebacks: The MVP will not write directly to legacy SAP/ERP systems due to
+security barriers.
+Mobile Application: The tool is optimized for desktop data analysts; mobile is not a
+requirement.
+Full ERP Functionality: Verity Portal is an auditing layer , not a replacement for primary
+databases.
+Verity Portal | Version 1.0 | Confidential & Proprietary Document 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+3
+

@@ -25,7 +25,7 @@ We will use **OAuth2 with stateless JWT (JSON Web Tokens)** and **Bcrypt** for p
 
 ### Session-based Cookies
 - Pros: Simple to invalidate, well-supported.
-- Cons: Requires server-side state (e.g., Redis). May add complexity given our strict Hexagonal architecture and potential for stateless API scaling.
+- Cons: Requires server-side state (e.g., Redis). May add complexity and potential for stateless API scaling.
 - Rejected: JWTs simplify the FastAPI backend implementation and align better with typical single-page application (Angular) decoupled architectures.
 
 ### Third-Party SSO (e.g., Auth0, Okta)
@@ -36,4 +36,4 @@ We will use **OAuth2 with stateless JWT (JSON Web Tokens)** and **Bcrypt** for p
 ## Consequences
 - The frontend must securely store the JWT (preferably in memory or secure HTTP-only cookies eventually, but `localStorage`/`sessionStorage` initially for development).
 - Guest users will not have persistent database records, or will share a generic "guest" identity payload encoded entirely in the JWT.
-- We must implement JWT decoding and validation in FastAPI dependencies to protect Domain Layer endpoints.
+- We must implement JWT decoding and validation in FastAPI dependencies to protect feature-specific service endpoints.
