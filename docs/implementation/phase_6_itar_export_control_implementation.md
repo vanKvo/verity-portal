@@ -1,5 +1,11 @@
 # Implementation Details for Phase 6 - ITAR & Export Control
 
+This document tracks the evolution of the ITAR module from the v1.0.0 Prototype to the v1.1.0 Enterprise Data Hub.
+
+---
+
+# [v1.0.0] Initial Prototype Implementation
+
 ## Security Foundation: Stubbed RBAC
 *For Backend Developers*
 - **Description:** Implement a role-based access control (RBAC) contract to secure compliance endpoints.
@@ -14,10 +20,6 @@
   - `backend/src/verity_portal/core/security/roles.py`
   - `backend/src/verity_portal/identity/models.py`
   - `backend/src/verity_portal/identity/schemas.py`
-- **Verify:**
-  - Attempting to access ITAR endpoints with a guest user (who now has the role) succeeds.
-
----
 
 ## FR-6.1: Program Management Data Ingestion & Mapping
 *For Backend Developers*
@@ -26,32 +28,10 @@
   - [x] Created `ProjectAssignment` SQLAlchemy model.
   - [x] Implemented `ItarService.ingest_roster` with bulk insert logic.
   - [x] Added `POST /api/v1/itar/roster/upload` endpoint.
-- **Logic Implementation:**
-  - Used `pandas` for high-performance CSV parsing.
-  - Implemented validation for required columns (`employee_id`, `project_id`).
-  - Optimized database insertion by checking for existing assignments before creating new ones.
 - **Files:**
   - `backend/src/verity_portal/itar/models.py`
   - `backend/src/verity_portal/itar/service.py`
   - `backend/src/verity_portal/itar/router.py`
-- **Verify:**
-  - `poetry run pytest backend/tests/itar/test_roster_ingestion.py`
-
-*For Frontend Developers*
-- **Description:** Build the ITAR Dashboard and roster upload interface.
-- **Acceptance:**
-  - [x] Created `ItarDashboardComponent` with Material Design.
-  - [x] Implemented file upload service and snackbar feedback.
-- **Logic Implementation:**
-  - Built a clean, responsive dashboard using Angular Material.
-  - Implemented `ItarService.uploadRoster` to handle multi-part file uploads.
-- **Files:**
-  - `frontend/src/app/features/itar-audit/components/itar-dashboard.component.ts`
-  - `frontend/src/app/features/itar-audit/services/itar.service.ts`
-- **Verify:**
-  - Manual verification of file upload via UI with success snackbar notification.
-
----
 
 ## FR-6.2: HR Citizenship Data Standardization
 *For Backend Developers*
@@ -60,44 +40,68 @@
   - [x] Updated `Personnel` model with `citizenship_status` ENUM.
   - [x] Created `S3WorkerService` for AWS S3 integration.
   - [x] Implemented fuzzy matching for citizenship normalization.
-- **Logic Implementation:**
-  - Used `boto3` for S3 interactions and `moto` for local testing.
-  - Leveraged `thefuzz` library to map raw strings (e.g., "USA", "United States") to strict `CitizenshipStatus` values.
 - **Files:**
   - `backend/src/verity_portal/shared/models.py`
   - `backend/src/verity_portal/itar/s3_worker.py`
-  - `backend/src/verity_portal/core/config.py`
-- **Verify:**
-  - `poetry run pytest backend/tests/itar/test_s3_sync.py`
 
 ---
 
-## FR-6.3: Automated ITAR Reconciliation Engine
+# [v1.1.0] Enterprise Data Hub Refactor
+
+## Security Foundation: Granular RBAC [MODIFY]
 *For Backend Developers*
-- **Description:** Core reconciliation engine to detect ITAR compliance violations.
+- **Description:** Migrate from a single `ROLE_EXPORT_CONTROL` to a granular role system.
 - **Acceptance:**
-  - [x] Implemented `ItarService.run_reconciliation_audit`.
-  - [x] Created violations retrieval and resolution endpoints.
+  - [x] Update `require_role` to support `ROLE_HR`, `ROLE_PM`, `ROLE_ECO`.
+  - [x] Ensure `ROLE_HR` is used for personnel master data.
+  - [x] Ensure `ROLE_PM` is used for operational roster uploads.
+  - [x] Ensure `ROLE_ECO` is used for project sensitivity and violation resolution.
+- **Verify:**
+  - [x] Tests verify that `ROLE_PM` cannot upload HR data.
+
+## FR-6.2: Foundational Data Hub (Master Records) [NEW]
+*For Backend Developers*
+- **Description:** Build the modular SoR (System of Record) gateway.
+- **Acceptance:**
+  - [x] Create `src/verity_portal/data_hub/core/ingestion.py` with generic bulk-upsert logic.
+  - [x] Implement `data_hub/personnel/` with `termination_date` and citizenship normalization.
+  - [x] Implement `data_hub/projects/` for master sensitivity classifications.
+  - [x] Setup `data_hub/router.py` with type-specific endpoints.
 - **Logic Implementation:**
-  - Developed a high-performance join query between `Assignments`, `Personnel`, and `Projects`.
-  - Automatically flags `FOREIGN_NATIONAL` users on `ITAR_RESTRICTED` projects.
+  - [x] Reuse Pandas logic for all SoR streams.
+  - [x] Enforce strict ENUMs at the database level for both citizenship and sensitivity.
+- **Files:**
+  - `backend/src/verity_portal/data_hub/`
+- **Verify:**
+  - [x] `pytest backend/tests/data_hub/`
+
+## FR-6.1: ITAR Roster Ingestion [MODIFY]
+*For Backend Developers*
+- **Description:** Refactor ITAR roster ingestion to point to the Data Hub.
+- **Acceptance:**
+  - [x] Update `ItarService.ingest_roster` to validate against the new `Personnel` model in `data_hub`.
+  - [x] Change RBAC on the roster upload endpoint to `ROLE_PM`.
 - **Files:**
   - `backend/src/verity_portal/itar/service.py`
   - `backend/src/verity_portal/itar/router.py`
-  - `backend/src/verity_portal/itar/models.py`
-- **Verify:**
-  - `poetry run pytest backend/tests/itar/test_reconciliation.py`
 
-*For Frontend Developers*
-- **Description:** Compliance audit monitoring and remediation UI.
+## FR-6.3: ITAR Reconciliation & Auto-Resolution [MODIFY]
+*For Backend Developers*
+- **Description:** Implement intelligent audit cycles with auto-resolution.
 - **Acceptance:**
-  - [x] Integrated violations table into the dashboard.
-  - [x] Implemented "Resolve Violation" action logic.
-- **Logic Implementation:**
-  - Used `MatTable` with real-time data from the `ItarService`.
-  - Added action buttons to remediate violations directly from the dashboard.
-- **Files:**
-  - `frontend/src/app/features/itar-audit/components/itar-dashboard.component.ts`
-  - `frontend/src/app/features/itar-audit/services/itar.service.ts`
+  - [x] Update `ItarReconciliationEngine` to scan for `SYSTEM_AUTO_RESOLVED` scenarios.
+  - [x] Add `resolution_reason` to the violations table for audit trails.
+  - [x] Strictly restrict manual resolution to `ROLE_ECO`.
 - **Verify:**
-  - Violation engine detects mismatches and displays them in the UI; clicking "Resolve" updates the status in the DB.
+  - [x] Seed violation -> Update HR data -> Run Audit -> Verify violation is AUTO_RESOLVED.
+
+## Frontend: Unified Data Hub & Compliance [NEW / MODIFY]
+*For Frontend Developers*
+- **Description:** Build the role-aware master data dashboard.
+- **Acceptance:**
+  - [x] Create `DataHubComponent` with conditional tabs for `ROLE_HR` and `ROLE_ECO`.
+  - [x] Update `ItarDashboardComponent` to conditionally show "Resolve" based on `ROLE_ECO`.
+  - [x] Display auto-resolution reasons in the violations table.
+- **Files:**
+  - `frontend/src/app/features/data-hub/`
+  - `frontend/src/app/features/itar-audit/`
