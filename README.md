@@ -16,20 +16,27 @@ Designed using hexagonal architecture to isolate core compliance logic from infr
 * **Auditor-Ready Reporting:** Generates non-editable, formal PDF reports summarizing audit logic and results, alongside sanitized CSVs for secure back-system updates.
 
 ## Architecture
-Verity Portal is built on a strict **Hexagonal Architecture (Ports & Adapters)** model. This ensures that the core domain logic (compliance rules, fuzzy mapping) is completely isolated from external frameworks, databases, or delivery mechanisms. This isolation guarantees that the application is highly testable, durable, and auditor-ready.
+Verity Portal is built on a **Feature-Based Layout (Vertical Slicing)** model. This ensures that each domain feature (e.g., ITAR compliance, Data Hub) is highly cohesive and decoupled from other features, communicating through explicit public contracts. This isolation guarantees that the application is highly testable, maintainable, and easily extensible.
 
-* [ADR-001: Authentication Strategy](docs/decisions/ADR-001-authentication-strategy.md)
-* [ADR-002: File Storage Strategy for Data Intake](docs/decisions/ADR-002-file-storage-strategy.md)
-* [ADR-003: Data Intake and Shared Mapper Strategy](docs/decisions/ADR-003-data-intake-and-mapping.md)
+* [ADR-001: Authentication Strategy](docs/architecture_decision_records/ADR-001-authentication-strategy.md)
+* [ADR-002: File Storage Strategy for Data Intake (Superseded)](docs/architecture_decision_records/ADR-002-file-storage-strategy.md)
+* [ADR-003: Data Intake and Shared Mapper Strategy](docs/architecture_decision_records/ADR-003-data-intake-and-mapping.md)
+* [ADR-004: Compliance Engine and Data Export Strategy](docs/architecture_decision_records/ADR-004-compliance-engine-and-exports.md)
+* [ADR-005: Feature-Based Layout (Vertical Slicing)](docs/architecture_decision_records/ADR-005-feature-based-layout.md)
+* [ADR-006: Hybrid Data Ingestion Strategy (Manual UI & S3 Simulation)](docs/architecture_decision_records/ADR-006-hybrid-data-ingestion-strategy.md)
+* [ADR-007: AWS S3 File Storage Strategy](docs/architecture_decision_records/ADR-007-aws-s3-file-storage-strategy.md)
 
 ## Tech Stack
 * **Frontend**: Angular 21 (Standalone Components, Signals), TypeScript, Angular Material
-* **Backend**: Python 3.11+, FastAPI, Pandas (Data Processing), `thefuzz` (Fuzzy Matching)
+* **Backend**: Python 3.11 - 3.14 (3.13.9 recommended), FastAPI, Pandas (Data Processing), `thefuzz` (Fuzzy Matching)
 * **Database**: PostgreSQL (with JSONB for dynamic data ingestion), SQLAlchemy, Alembic
 * **DevOps**: Docker, Docker Compose, Poetry (Python package management)
 
 ## Security Best Practices
-* **Authentication**: Stateless JWT implementation with strict Role-Based Access Control (RBAC). Passwords securely hashed via Bcrypt.
+* **Authentication & RBAC**: Stateless JWT implementation with strict Role-Based Access Control enforcing separation of duties. Passwords securely hashed via Bcrypt. Supported roles include:
+  * `ROLE_HR`: Manages master personnel records (e.g., citizenship status).
+  * `ROLE_PM`: Manages project assignments and roster data.
+  * `ROLE_ECO`: Export Control Officers who oversee compliance audits and violation remediation.
 * **Data Ingestion Constraints**: File-based ingestion (CSV/XLSX) supports air-gapped/firewalled environments. Strict 50MB upload limits and extension validation prevent DoS and malicious payloads.
 * **Database Segmentation**: Dedicated `verity` PostgreSQL schema to isolate application data, separating core compliance metadata from staging data (JSONB).
 
@@ -40,7 +47,7 @@ Verity Portal is built on a strict **Hexagonal Architecture (Ports & Adapters)**
 ### Prerequisites
 * Docker & Docker Compose
 * Node.js (v20+) & npm (for local frontend development)
-* Python 3.11+ & Poetry (for local backend development)
+* Python 3.11 - 3.14 (3.13.9 recommended) & Poetry (for local backend development)
 
 ### Installation
 1.  **Clone the repository:**
@@ -59,7 +66,7 @@ Verity Portal is built on a strict **Hexagonal Architecture (Ports & Adapters)**
     ```bash
     cd backend
     poetry install
-    poetry run uvicorn app.main:app --reload
+    poetry run uvicorn src.verity_portal.main:app --reload
     ```
     The API will be accessible at `http://localhost:8000`.
 

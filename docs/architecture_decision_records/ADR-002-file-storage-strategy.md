@@ -1,7 +1,7 @@
 # ADR-002: File Storage Strategy for Data Intake
 
 ## Status
-Accepted
+Superseded by [ADR-007: AWS S3 File Storage Strategy](ADR-007-aws-s3-file-storage-strategy.md)
 
 ## Date
 2026-04-28
@@ -13,11 +13,10 @@ Key requirements:
 - Need to prevent the FastAPI backend from blocking during large file I/O operations.
 - Require tracking the lifecycle of a file (e.g., Staged, Processed, Archived) for audit purposes.
 - Must align with the enterprise database schema pattern (using the `verity` schema in PostgreSQL).
-- Must follow the Port & Adapter pattern *within* the intake feature to allow future swapping of storage backends (e.g., migrating from Local Disk to AWS S3) without breaking business logic.
+- Must follow strict abstraction *within* the intake feature to allow future swapping of storage backends (e.g., migrating from Local Disk to AWS S3) without breaking business logic.
 
 ## Decision
-We decided to implement a dual-storage approach using an asynchronous local file system adapter and a PostgreSQL metadata table:
-1.  **Physical Storage (Port & Adapter Pattern)**: Define a `StoragePort` interface and implement a `LocalFileSystemAdapter` using `aiofiles`. This allows asynchronous non-blocking file I/O on the local disk, organized into `/staging` and `/archive` directories.
+1.  **Physical Storage**: Define a `StorageInterface` and implement a `LocalFileSystemStorage` using `aiofiles`. This allows asynchronous non-blocking file I/O on the local disk, organized into `/staging` and `/archive` directories.
 2.  **Metadata Tracking**: Create a `FileMetadataModel` within the `verity` PostgreSQL schema to track the file's UUID, original name, physical path, and processing `status`.
 3.  **Feature Orchestration**: The `FileManager` service (within the `intake` feature) coordinates these two layers, ensuring that files are saved to disk *before* their metadata is committed to the database, enforcing the 50MB upload limit, and generating secure UUID-based filenames to prevent directory traversal attacks.
 
@@ -31,9 +30,9 @@ We decided to implement a dual-storage approach using an asynchronous local file
 ### Immediate Cloud Storage (AWS S3)
 - **Pros**: Highly scalable, offloads disk management.
 - **Cons**: Introduces cloud dependency and network latency during the initial MVP development phase.
-- **Rejected**: While a valid future path, a `LocalFileSystemAdapter` is sufficient for current requirements. The `StoragePort` interface ensures we can seamlessly swap to an `S3Adapter` later without changing the core feature logic.
+- **Rejected**: While a valid future path, a `LocalFileSystemStorage` is sufficient for current requirements. The `StorageInterface` ensures we can seamlessly swap to an `S3Storage` later without changing the core feature logic.
 
 ## Consequences
 - **Performance**: Asynchronous file I/O (`aiofiles`) keeps the FastAPI event loop unblocked, ensuring high concurrency.
 - **Security**: UUID-based filenames mitigate injection attacks, and the strict 50MB limit prevents denial-of-service via disk exhaustion.
-- **Maintainability**: The clear separation between the `StoragePort` and `FileMetadataModel` adheres to the decoupled pattern, making future cloud migrations trivial while keeping the intake feature self-contained.
+- **Maintainability**: The clear separation between the `StorageInterface` and `FileMetadataModel` adheres to the decoupled pattern, making future cloud migrations trivial while keeping the intake feature self-contained.

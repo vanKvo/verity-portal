@@ -17,7 +17,7 @@ Key requirements:
 We implemented a **Shared Mapper Service** utilizing Fuzzy Logic and JSONB storage:
 
 1.  **Fuzzy Mapping (Feature Logic)**: We chose `thefuzz` library using the `fuzz.ratio` scoring method combined with text normalization (lowercasing, stripping spaces/underscores). This proved highly accurate for standardizing disparate header names (e.g., matching "FName" to "first_name").
-2.  **Dynamic Storage (Internal Adapter)**: We created the `IntakeRecordModel` utilizing PostgreSQL's `JSON` (JSONB) column type to store the ingested data rows. This allows us to store fully mapped, heterogeneous data without requiring rigid, module-specific database tables for the raw intake layer.
+2.  **Dynamic Storage**: We created the `IntakeRecordModel` utilizing PostgreSQL's `JSON` (JSONB) column type to store the ingested data rows. This allows us to store fully mapped, heterogeneous data without requiring rigid, module-specific database tables for the raw intake layer.
 3.  **Data Processing**: We leverage `pandas` to read the staged CSV/XLSX files, efficiently apply the user-confirmed column renaming, and convert the DataFrame into JSON records for database insertion.
 4.  **Reactive UI (Frontend)**: We built a standalone `SharedMapperComponent` in Angular 21, leveraging **Signals** (`signal`, `computed`) to manage the mapping state. This provides real-time validation to ensure users map all required fields before the "Confirm & Process" button is enabled.
 
