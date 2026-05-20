@@ -1,6 +1,6 @@
 # Verity Portal
 
-Verity Portal is a production-grade compliance platform that eliminates the risks of “Excel engineering” for organizations with strict compliance and audit requirements, where manual reconciliation of siloed data (HR, IT, Finance, Security) leads to errors, security gaps, and audit exposure. The system ingests structured data sources (.csv/.xlsx), validates and stages them, and applies a domain-driven reconciliation engine to cross-reference records against a centralized single source of truth, proactively flagging violations such as export control breaches, expired security training, and unauthorized system access. 
+Verity Portal is a production-grade compliance platform that eliminates the risks of “Excel engineering” for organizations with strict compliance and audit requirements, where manual reconciliation of siloed data (HR, IT, Finance, Security) leads to errors, security gaps, and audit exposure. The system ingests structured data sources, validates and stages them, and applies a domain-driven reconciliation engine to cross-reference records against a centralized single source of truth, proactively flagging violations such as export control breaches, expired security training, and unauthorized system access. 
 
 ![Project Screenshot](images/verity-login-page.png)
 
