@@ -23,6 +23,7 @@ Verity Portal is built on a **Feature-Based Layout (Vertical Slicing)** model. T
 * [ADR-005: Feature-Based Layout (Vertical Slicing)](docs/architecture_decision_records/ADR-005-feature-based-layout.md)
 * [ADR-006: Hybrid Data Ingestion Strategy (Manual UI & S3 Simulation)](docs/architecture_decision_records/ADR-006-hybrid-data-ingestion-strategy.md)
 * [ADR-007: AWS S3 File Storage Strategy](docs/architecture_decision_records/ADR-007-aws-s3-file-storage-strategy.md)
+* [ADR-008: Cross-Origin Resource Sharing (CORS) and Token Security Strategy](docs/architecture_decision_records/ADR-008-cross-origin-resource-sharing-strategy.md)
 
 ## Tech Stack
 * **Frontend**: Angular 21 (Standalone Components, Signals), TypeScript, Angular Material
