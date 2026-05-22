@@ -53,29 +53,49 @@ To ensure strict ITAR compliance by verifying the accurate ingestion of project 
 
 ---
 
-### FR-6.2: Master Data Hub (HR Ingestion)
-*Ensures foundational data is correctly ingested via webhooks and manual overrides.*
+### FR-6.2: Master Data Hub (HR & Project Ingestion)
+*Ensures foundational data is correctly ingested via webhooks, dynamic routing, and manual overrides.*
 
-**Test 4: S3 Webhook Trigger (Backend)** **[NEW]**
-- **Purpose:** Verify the webhook endpoint securely receives payload and triggers ingestion.
-- **Target Route:** `POST /api/v1/hr/webhooks/s3-ingest` (`src/verity_portal/personnel/router.py`)
-- **Setup:** Mock an AWS EventBridge S3 payload. 
-- **Action:** POST the payload to the endpoint.
-- **Assertion:** Endpoint returns 202 Accepted and correctly invokes `PersonnelService.ingest_master_data`.
+**Test 4: S3 Webhook Trigger & Dynamic Routing (Backend)** **[NEW]**
+- **Purpose:** Verify the webhook endpoint securely receives S3 payloads, schedules background ingestion, and routes dynamically based on object key keywords.
+- **Target Route:** `POST /data-hub/webhooks/s3-ingest` (`src/verity_portal/data_hub/router.py`)
+- **Setup:** 
+  1. Mock S3 event payload with file key `"hr/hr_personnel_records_v5.numbers"`.
+  2. Mock S3 event payload with file key `"projects/project_governance.csv"`.
+  3. Mock S3 event payload with file key `"inventory/stock_list.xlsx"`.
+- **Action:** POST each payload to the webhook endpoint.
+- **Assertion 1 (HR Key):** Endpoint returns 200 OK with `message: "S3 Sync Triggered"`, queues background ingestion, and routes to `PersonnelService.ingest_master_data`.
+- **Assertion 2 (Project Key):** Endpoint returns 200 OK, queues background ingestion, and routes to `ProjectService.ingest_master_data`.
+- **Assertion 3 (Invalid Key):** Endpoint raises `IngestionRoutingError` or returns 400 Bad Request since the key did not contain `"hr"`, `"personnel"`, or `"project"`.
 
-**Test 5: HR Manual Override (Backend)** **[NEW]**
-- **Purpose:** Ensure only `ROLE_HR` can manually upload Master Data.
-- **Target Route:** `POST /api/v1/hr/roster/upload`
-- **Assertion 1:** User with `ROLE_PM` receives 403 Forbidden.
-- **Assertion 2:** User with `ROLE_HR` receives 200 OK and data is upserted.
+**Test 5: Manual Override RBAC enforcement (Backend)** **[NEW]**
+- **Purpose:** Ensure role-based boundaries prevent unauthorized spreadsheet manual uploads.
+- **Target Route 1:** `POST /data-hub/personnel/upload`
+- **Target Route 2:** `POST /data-hub/projects/upload`
+- **Setup:** 
+  1. Authenticate a user with `ROLE_PM`.
+  2. Authenticate a user with `ROLE_HR`.
+  3. Authenticate a user with `ROLE_ECO`.
+- **Action:** Trigger file upload to each manual endpoint.
+- **Assertion 1 (HR endpoint):** `ROLE_PM` receives 403 Forbidden; `ROLE_HR` receives 200 OK.
+- **Assertion 2 (Project endpoint):** `ROLE_PM` receives 403 Forbidden; `ROLE_ECO` receives 200 OK.
 
-**Test 6: S3 Ingestion and Fuzzy Matching (Backend)** **[DELETE]**
-- **Test name:** `test_s3_worker_normalizes_citizenship` 
-- **Reason:** The standalone `s3_worker.py` inside the `itar` module is deprecated. Normalization testing is moved to the `PersonnelService` unit tests.
+**Test 6: Thread-Safe .numbers Temporary File Parsing (Backend)** **[NEW]**
+- **Purpose:** Verify seekable binary stream extraction for `.numbers` format works correctly in a multi-threaded context and cleanly deletes the buffer.
+- **Target Service:** `file_utils.parse_file_to_df` (`src/verity_portal/core/utils/file_utils.py`)
+- **Setup:** Mock a binary `BytesIO` payload of a valid Numbers spreadsheet.
+- **Action:** Execute the parser function.
+- **Assertion 1:** The function writes to a temporary file buffer on disk to bypass `zipfile` limitations.
+- **Assertion 2:** The file is parsed successfully and returned as a standard Pandas DataFrame.
+- **Assertion 3:** The temporary file on disk is strictly deleted from `/tmp` or the workspace cache post-execution.
 
-**Test 7: Unrecognized Citizenship Fallback (Backend)** **[DELETE]**
-- **Test name:** `test_s3_worker_unknown_status` 
-- **Reason:** Moved to `PersonnelService` unit tests.
+**Test 7: Dynamic Column Header Mapping (Backend)** **[NEW]**
+- **Purpose:** Ensure that submitting custom JSON mapping dictionary parses raw columns to standard DB models.
+- **Target Route:** `POST /data-hub/personnel/upload`
+- **Setup:** Upload a file with custom headers "Work Email" and "National Status" along with mapping `{"Work Email": "email", "National Status": "citizenship_status"}`.
+- **Action:** Execute the upload.
+- **Assertion 1:** The engine parses and normalizes the values, saving them to correct DB fields.
+- **Assertion 2:** Variations such as "U.S. Citizen" map correctly to the standard `US_CITIZEN` ENUM.
 
 ---
 

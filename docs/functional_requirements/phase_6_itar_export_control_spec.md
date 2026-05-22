@@ -60,7 +60,7 @@ Focus: User-driven choices that still result in a valid completion or safe exit.
 ### Non-Functional Requirements (Constraints)
 - **NFR-6.1.1: Performance.** The ingestion service must be able to process and map a roster of 50,000 assignments within 10 seconds.
 - **NFR-6.1.2: Idempotency.** Re-ingesting the exact same project roster must not result in duplicate assignment records or database errors.
-- **NFR-6.1.3: Security (RBAC).** The ingestion endpoint must be strictly protected by the `ROLE_EXPORT_CONTROL` role to prevent unauthorized data uploads.
+- **NFR-6.1.3: Security (RBAC).** The ingestion endpoint must be strictly protected by the `ROLE_PM` or `ROLE_ECO` roles to prevent unauthorized data uploads.
 
 ### Verification Plan (Acceptance Criteria)
 - **AC-6.1.1:** Verify that ingesting a valid roster successfully populates the bridging table between Personnel and Projects.
@@ -69,49 +69,57 @@ Focus: User-driven choices that still result in a valid completion or safe exit.
 
 ---
 
-## Requirement ID: FR-6.2 – HR Citizenship Data Standardization
+## Requirement ID: FR-6.2 – HR & Project Master Data Hub (Centralized Ingestion)
 ### Business Context & Rationale (The "Why")
-Data drift from messy HR system exports (e.g., "US", "U.S.", "United States", "Citizen") prevents automated reconciliation. Utilizing a custom ENUM for `citizenship_status` ensures strict data normalization upon ingestion, preventing unrecognized statuses from silently bypassing ITAR filters.
+Data drift from messy system exports (e.g., "US", "U.S.", "United States", "Citizen") prevents automated reconciliation. Utilizing a unified, vertical Data Hub slice decouples data ingestion from modular operational logic (such as ITAR violations and leaver processing). Centralizing S3 ingestion and manual file ingestion under a shared, schema-agnostic Data Hub engine enforces strict schema mapping and validation.
 
 ### User Story
-**As an** Export Control Officer,
-**I want** the system to automatically ingest and normalize HR citizenship data via a secure background process,
-**So that** I do not have to manually request PII from HR or risk unrecognized citizenship inputs bypassing the ITAR security engine.
+**As an** Export Control Officer or HR Administrator,
+**I want** the system to automatically ingest and normalize HR citizenship and Project sensitivity records via secure manual mapping and background S3 webhooks,
+**So that** I do not have to manually perform database imports or risk unrecognized data bypassing the compliance engine.
 
 ### Functional Requirements
-- **FR-6.2.1: Custom ENUM Enforcement.** The system shall enforce a strict `citizenship_status` ENUM (e.g., US_CITIZEN, PERMANENT_RESIDENT, FOREIGN_NATIONAL) during HR data ingestion.
-- **FR-6.2.2: Import Normalization.** The mapping service shall apply fuzzy matching or predefined dictionaries to normalize variations of citizenship strings into the standard ENUM.
-- **FR-6.2.3: Unrecognized Status Handling.** The system shall flag any unmappable citizenship strings for manual review, preventing them from defaulting to a "safe" status.
-- **FR-6.2.4: Ingestion Modes.** The system shall support both automated webhook ingestion (triggered by S3 event drops) and manual file uploads via a dedicated "Data Integrations Hub" restricted to the `ROLE_HR`.
+- **FR-6.2.1: Custom ENUM Enforcement.** The system shall enforce strict data typing and ENUMs (e.g., `citizenship_status` as `US_CITIZEN`, `PERMANENT_RESIDENT`, `FOREIGN_NATIONAL`; `project_sensitivity` as `ITAR_RESTRICTED`, `EAR99`, `UNCLASSIFIED`) during master data ingestion.
+- **FR-6.2.2: Column Header Parsing.** The system shall expose a parsing service to extract unique raw header strings from uploaded files (supporting `.csv`, `.xlsx`, `.xls`, and `.numbers` formats) to present to the user for visual data mapping.
+- **FR-6.2.3: Dynamic Mapping Engine.** The system shall allow the user to submit custom key-value JSON column mapping dictionaries (translating arbitrary uploaded header labels to target schema fields) during manual ingestion.
+- **FR-6.2.4: Ingestion Normalization.** The ingestion engine shall apply fuzzy-matching dictionaries or pre-defined string mappers to normalize raw input strings into the standard DB ENUM keys.
+- **FR-6.2.5: Automated S3 Webhook Routing.** The system shall support background file ingestion triggered by external AWS S3 `s3:ObjectCreated:Put` event webhook drops. The webhook router shall inspect the file's object key and dynamically route execution:
+  - If the key contains `"hr"` or `"personnel"`, the file is routed to the **HR Master Ingestor**.
+  - If the key contains `"project"`, the file is routed to the **Project Master Ingestor**.
+  - Otherwise, the system rejects the file with an `IngestionRoutingError`.
+- **FR-6.2.6: Threat-Safe Multi-Format Processing.** The file parser must securely support seekable binary streams and SpooledTemporaryFiles, utilizing temporary file extraction for `.numbers` spreadsheets to prevent event-loop freezing and handle thread-safe file deletion post-parsing.
+- **FR-6.2.7: Sync Status & UI Polling.** The system shall expose an endpoint to retrieve the most recent `updated_at` database timestamp across both HR and Project tables. The user interface shall perform periodic background polling (every 10 seconds) and provide a manual refresh action to keep the system status visible.
 
 ### User Interaction & Workflow
 #### Path 1: Basic Flow (Automated S3 Webhook Ingestion)
 Focus: Event-driven background ingestion and standardization of HR master data.
-- An external HR system (e.g., ADP, Workday) drops the master employee roster CSV into a secure AWS S3 bucket on a schedule.
-- An S3 event triggers a webhook call to the Verity Portal backend (`/api/v1/hr/webhooks/s3-ingest`).
-- System securely downloads the file, mapping string variations (e.g., "U.S. Citizen") to the `US_CITIZEN` ENUM automatically.
-- System processes the import, updating the Master HR Database Cache, serving as the single source of truth for all modules.
-- System generates a daily digest notification indicating successful automated sync, with zero manual user interaction.
+- An external HR system drops the master employee roster spreadsheet (`hr_personnel_records_v5.numbers`) into a secure S3 bucket.
+- An S3 event triggers a POST request to the Verity Portal backend webhook (`/data-hub/webhooks/s3-ingest`).
+- FastAPI receives the payload, schedules a Background Task, and returns a `200 OK` "S3 Sync Triggered" response immediately to prevent timeout.
+- The background task securely downloads the file as a binary stream, writes it to a temporary `.numbers` buffer, parses the rows, and routes them to `PersonnelService` using the dynamic S3 router.
+- System processes the upserts, updating the database `updated_at` timestamp.
+- The user's active browser page polls `/data-hub/sync-status` and automatically displays the updated "Last Sync: May 22, 2026, 11:43:46 AM" without page reload.
 
 #### Path 2: Exception Flows (Errors & Edge Cases)
 Focus: Handling unmappable or malformed background data.
-- **Exc-A: Unmappable Status:** System encounters a completely unrecognized string (e.g., "Unknown"). System halts the automated ingestion of that specific record, flags it as a `MappingError`, and queues it for review.
-- **Exc-B: Null Citizenship:** System encounters a required citizenship field that is empty. System flags the record for manual remediation.
-- **Exc-C: Malformed S3 File:** The automated worker encounters a file with a changed schema (e.g., missing columns). The system quarantines the file and triggers an asynchronous administrative alert (email/dashboard) notifying the System Administrator that the nightly sync failed.
+- **Exc-A: Unmappable Status:** System encounters a completely unrecognized citizenship status string. System halts the automated ingestion of that specific record, flags it as a `ValidationError`, and continues ingesting other valid rows to ensure partition tolerance.
+- **Exc-B: Routing Failure:** System receives a webhook payload for a file key `inventory/stock_list.xlsx`. The router detects no `"hr"`, `"personnel"`, or `"project"`, raises `IngestionRoutingError`, and halts processing.
+- **Exc-C: Malformed S3 Bucket:** The automated worker receives a bucket name containing invalid characters (e.g. underscores) or invalid keys. The `S3EventStrategy` catches the `ClientError` (404 Not Found), raises `DataHubRetrievalError`, and triggers an email alert using `SnsEmailService` to notify administrative staff.
 
 #### Path 3: Alternative Flows
-Focus: Manual intervention for unrecognized data.
-- **Alt-A: Manual Override:** User navigates to the "Pending Imports" queue, reviews the flagged record, and manually selects the correct ENUM value from a dropdown to unblock the record.
+Focus: Manual mapping override for custom spreadsheet uploads.
+- **Alt-A: Shared Column Mapper:** An HR Administrator uploads a custom Excel roster file (`new_hires.xlsx`). The frontend extracts headers via `/data-hub/parse-headers`, presents the Shared Column Mapper UI, allowing the user to map "Work Email" to `email` and "National Status" to `citizenship_status`. The user clicks "Upload", sending the file and the mapping schema to `/data-hub/personnel/upload`.
 
 ### Non-Functional Requirements (Constraints)
-- **NFR-6.2.1: Security.** HR data imports containing citizenship must be encrypted in transit and at rest.
-- **NFR-6.2.2: Auditability.** Any manual override of a citizenship status must be permanently logged with the user's ID and timestamp.
-- **NFR-6.2.3: Cloud Permissions.** The ingestion worker must authenticate using a strict IAM Role limited to `s3:GetObject` on the specific bucket; hardcoded access keys must not be used.
+- **NFR-6.2.1: Security (RBAC).** Manual master HR data uploads must require `ROLE_HR` authorization. Manual project master uploads must require `ROLE_ECO` authorization. Webhook calls require internal secure token or AWS IAM credentials.
+- **NFR-6.2.2: Auditability.** Any manual override or bulk import must update the target table's audit columns and track execution outputs (success count, error count, row-by-row validation failures).
+- **NFR-6.2.3: Non-blocking Async I/O.** The S3 webhook ingestion must execute expensive S3 downloads in an architectural thread pool (`run_in_executor`) to avoid freezing the FastAPI event loop.
 
 ### Verification Plan (Acceptance Criteria)
 - **AC-6.2.1:** Verify that variations like "US", "USA", and "U.S." map correctly to the `US_CITIZEN` ENUM.
-- **AC-6.2.2:** Verify that an unrecognized string correctly triggers a `MappingError` and does not default to a presumed safe status.
-- **AC-6.2.3:** Verify that the database schema rejects any insert or update containing an invalid ENUM value.
+- **AC-6.2.2:** Verify that S3 webhook event triggers run fully in the background and gracefully handle temporary `.numbers` file creation/deletion.
+- **AC-6.2.3:** Verify that file keys are correctly routed based on keyword matching, and unmappable keys raise a clear routing error.
+- **AC-6.2.4:** Verify that frontend polling queries the max database timestamp and updates the UI status in near-real-time.
 
 ---
 

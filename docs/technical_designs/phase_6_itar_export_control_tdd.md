@@ -25,24 +25,29 @@ App Version: 1.1.0
   - `moto` (S3 mocking for unit/integration tests)
 
 ### Project Structure (Feature-Based Layout)
-- `backend/src/verity_portal/personnel/` **[NEW]** → Foundational Data Hub
-  - `models.py` → Database schemas for Master HR Data
-  - `service.py` → Ingestion and Normalization Engine
-  - `router.py` → S3 Webhook triggers and HR manual upload APIs
-- `backend/src/verity_portal/itar/` **[MODIFY]** → Operational Domain
-  - `models.py` → Project Assignments, Violations
-  - `service.py` → ITAR business logic & Reconciliation engine (Reads from `personnel`)
-  - `router.py` → PM Roster uploads, violations management
-  - `s3_worker.py` **[DELETE]** → (Moved to personnel module)
-- `frontend/src/app/features/data-hub/` **[NEW]** → Shared Data Hub UI
-- `frontend/src/app/features/itar-audit/` **[MODIFY]** → Operational UI
+- `backend/src/verity_portal/core/utils/file_utils.py` **[NEW]** → Centralized parsing utility
+  - `parse_file_to_df` → Seekable buffer parser for `.csv`, `.xlsx`, `.xls`, and `.numbers` formats (using temp file buffer cleanup).
+  - `extract_headers_from_file` → Low-overhead header parsing.
+- `backend/src/verity_portal/data_hub/` **[NEW]** → Centralized Master Data Hub Feature Slice
+  - `core/engine.py` → Centralized transactional bulk upsert engine (`MasterDataIngestor`).
+  - `core/retrieval.py` → Dynamic file retrieval strategies (`ManualUploadStrategy`, `S3EventStrategy` with threadpool offloading).
+  - `core/ingestion.py` → Coordination service (`DataHubOrchestrationService`) handling parsing, manual uploads, S3 webhooks, and routing.
+  - `personnel/` → HR master records model, schemas, and fuzzy validation service.
+  - `projects/` → Project master records model, schemas, and validation service.
+  - `router.py` → REST and Webhook coordinates (/data-hub).
+  - `exceptions.py` → Dedicated Data Hub exceptions.
+  - `schemas.py` → Data transfer objects.
+- `backend/src/verity_portal/itar/` **[MODIFY]** → Operational Compliance Module
+  - `models.py` → Operational project assignments and compliance violation logs.
+  - `service.py` → ITAR validation rules & reconciliation engine (reconciles operational assignments against the `data_hub` tables).
+- `frontend/src/app/features/data-hub/` **[NEW]** → Centralized Shared Data Hub UI (personnel/projects tabs, dynamic mapper, and polling sync status).
 
 ### Boundaries
-- **Always do:** Rely on strict ENUMs for citizenship validation.
-- **Always do:** Use `require_role("ROLE_EXPORT_CONTROL")` (or `ROLE_ECO`) for ITAR violations management. **[MODIFY]**
-- **Always do:** Perform citizenship normalization in the `PersonnelService` to maintain a strict internal ENUM. **[MODIFY]**
-- **Never do:** Store AWS Credentials in the source code or database. Use IAM Roles.
-- **Never do:** Allow a `ROLE_PM` to modify `personnel` master data or resolve compliance violations. **[NEW]**
+- **Always do:** Rely on strict ENUMs for citizenship (`US_CITIZEN`, `PERMANENT_RESIDENT`, `FOREIGN_NATIONAL`) and project sensitivity (`ITAR_RESTRICTED`, `EAR99`, `UNCLASSIFIED`).
+- **Always do:** Protect master HR uploads with `require_role("ROLE_HR")` and master project uploads with `require_role("ROLE_ECO")`.
+- **Always do:** Execute S3 downloads asynchronously offloaded to a thread pool (`run_in_executor`) to avoid event-loop blocking.
+- **Never do:** Direct file format parsing inside feature business services. Always delegate to the centralized `file_utils` parsing module.
+- **Never do:** Access environment variables directly from feature code. Always inject environment-specific configuration via the `ConfigService` (frontend) or `get_settings()` (backend).
 
 ---
 
@@ -70,36 +75,42 @@ App Version: 1.1.0
   - `created_at` (Datetime)
 
 ### API Specifications & Security (RBAC)
-*Note: Utilize the Stubbed RBAC dependency `Depends(require_role("..."))`*
-- **`POST /api/v1/hr/webhooks/s3-ingest`** **[NEW]** (S3 event trigger)
-  - **Requires Role:** Internal/IAM Auth
-- **`POST /api/v1/hr/roster/upload`** **[NEW]** (Uploads Master HR Data)
+- **`POST /data-hub/parse-headers`** (Extracts raw column headers)
+  - **Requires Role:** Authenticated users
+- **`POST /data-hub/personnel/upload`** (Manual overwrite/upsert HR Data)
   - **Requires Role:** `ROLE_HR`
-- **`POST /api/v1/itar/roster/upload`** **[MODIFY]** (Uploads Program Management CSV)
+- **`POST /data-hub/projects/upload`** (Manual overwrite/upsert Projects sensitivity)
+  - **Requires Role:** `ROLE_ECO`
+- **`POST /data-hub/webhooks/s3-ingest`** (AWS event webhook)
+  - **Requires Role:** Internal system auth
+- **`GET /data-hub/sync-status`** (Retrieve synchronization status dates)
+  - **Requires Role:** Authenticated users
+- **`POST /api/v1/itar/roster/upload`** (Uploads PM project roster assignments)
   - **Requires Role:** `ROLE_PM`
 - **`GET /api/v1/itar/violations`**
   - **Requires Role:** `ROLE_ECO` or `ROLE_PM`
-- **`PUT /api/v1/itar/violations/{id}/resolve`** **[MODIFY]** (Resolve violation)
+- **`PUT /api/v1/itar/violations/{id}/resolve`** (ECO resolve violation with explanation)
   - **Requires Role:** `ROLE_ECO`
-- **`POST /api/v1/itar/reconcile`** (Manually triggers the engine)
+- **`POST /api/v1/itar/reconcile`** (Manually executes audit)
   - **Requires Role:** `ROLE_PM` or `ROLE_ECO`
 
 ### Event Interfaces (Asynchronous)
-- **Subscribes To:** AWS S3 Event `s3:ObjectCreated:Put` on bucket `verity-hr-secure-sync`. Triggers webhook. **[MODIFY]**
-- **Publishes:** Internal application alerts (Violation Detected).
+- **Subscribes To:** AWS S3 Event `s3:ObjectCreated:Put` payload matching configured `S3_HR_BUCKET_NAME` or prefix. Defer parsing to FastAPI BackgroundTasks to avoid execution timeouts.
+- **Publishes:** Email notifications via `SnsEmailService` on background worker failures.
 
 ### Environment Variables & Configuration
-- `AWS_S3_HR_BUCKET`: Name of the bucket for automated ingestion.
-- `ITAR_ALERT_DISTRIBUTION_LIST`: Email address for critical compliance notifications.
+- `S3_HR_BUCKET_NAME`: Bucket configured for background S3 events (e.g. `verity-portal`).
+- `S3_ENDPOINT_URL`: Endpoint URL for secure S3 object retrieval (e.g. MinIO/S3 URL).
+- `AWS_SNS_TOPIC_ARN`: Target topic ARN to publish failed background worker alert emails.
 
 ### Error Handling Strategy
-- Raise `ITARMappingError` (Mapped to 400 Bad Request) for invalid CSV schemas.
-- Raise `S3IngestionError` (Triggers admin notification) for malformed background files.
+- Raise `MappingParseError` (HTTP 400) for unmappable column mappings or malformed JSON payloads.
+- Raise `DataHubRetrievalError` (HTTP 400) for S3 download issues or connection failures.
+- Raise `IngestionRoutingError` (HTTP 400) for webhook object keys not matching master data patterns.
 
 ---
 
 ## 3. Feature Implementation Breakdown
-*Developers: Read the block specific to your Jira ticket/Feature ID.*
 
 ### Requirement ID: FR-6.1 - Program Management Data Ingestion & Mapping
 **Architectural Rationale:** PMs trigger temporary operational assignments, which are mapped against the foundational HR database.
@@ -127,34 +138,37 @@ App Version: 1.1.0
 
 ---
 
-### Requirement ID: FR-6.2 - Master Data Hub (HR Ingestion)
-**Architectural Rationale:** HR data is foundational and shared across the application. It must be decoupled from the ITAR module.
+### Requirement ID: FR-6.2 - Centralized Data Hub (HR & Project Master Ingestion)
+**Architectural Rationale:** Foundational Master HR (Citizenship) and Project Sensitivity records are structurally decoupled from operational modules (e.g. ITAR reconciliations or leaver checklists) to prevent data drift and enforce robust separation of duties.
 
 #### Backend Implementation Specification (FastAPI)
 *For Backend Developers*
 - **Routing:** 
-  - `POST /api/v1/hr/webhooks/s3-ingest` **[NEW]** - Secure webhook triggered by AWS EventBridge.
-  - `POST /api/v1/hr/roster/upload` **[NEW]** - Requires `ROLE_HR`.
-- **Service Layer:** `PersonnelService.ingest_master_data()` **[NEW]**. Connects to S3 via `boto3`, downloads the CSV, and runs fuzzy matching to convert strings ("U.S.") to the `citizenship_status` ENUM.
-- **Data Access:** UPSERT logic on the `personnel` table based on `employee_id`.
+  - `POST /data-hub/webhooks/s3-ingest` **[NEW]** - Secure AWS S3 webhook trigger.
+  - `POST /data-hub/personnel/upload` **[NEW]** - Requires `ROLE_HR` for manual HR overrides.
+  - `POST /data-hub/projects/upload` **[NEW]** - Requires `ROLE_ECO` for manual Project overrides.
+  - `GET /data-hub/sync-status` **[NEW]** - Open to authenticated users to query latest update times.
+- **Service Layer:** `DataHubOrchestrationService` **[NEW]**. Orchestrates manual file mappings and dynamically routes background S3 event uploads to `PersonnelService` or `ProjectService` based on file keys.
+- **Data Access:** Dynamic Pydantic schema validation (`MasterDataIngestor` engine) executing transactional bulk UPSERTs with isolated database sub-transactions (nested savepoints).
 - **Deprecation:** **[DELETE]** `S3WorkerService` inside `src/verity_portal/itar/`.
 
 #### Frontend Implementation Specification (Angular)
 *For Frontend Developers*
 - **Component UI:** 
-  - `DataIntegrationsComponent` **[NEW]**. A dedicated dashboard restricted to `ROLE_HR`.
-  - `<app-hr-roster-upload>` **[NEW]**. Shared component for manual Master Data overrides.
-- **Deprecation:** **[MODIFY]** Remove the "Last HR Sync" widget from the `ComplianceDashboard` if it implies PMs control the sync. Make it a read-only timestamp.
+  - `DataHubComponent` **[NEW]**. A unified dashboard offering segregated tabs for "Personnel & HR Records" (restricted to `ROLE_HR`) and "Project Governance" (restricted to `ROLE_ECO`).
+  - `ShareMapperComponent` **[NEW]**. A reusable column mapping UI helper enabling dynamic Excel/Numbers header configuration.
+- **Polling & Refresh:** The frontend component polls `/data-hub/sync-status` every 10 seconds and displays a manual `refresh` action next to the last sync status.
 
 #### Implementation Tasks
-- [ ] **[Backend]** **[NEW]** Provision `boto3` webhook logic to securely fetch from `AWS_S3_HR_BUCKET`.
-- [ ] **[Backend]** **[NEW]** Implement citizenship fuzzy-matching dictionary in `PersonnelService`.
+- [ ] **[Backend]** **[NEW]** Setup the centralized `DataHubOrchestrationService` and bulk upsert engine.
+- [ ] **[Backend]** **[NEW]** Provision the shared file parser (`file_utils.py`) to support thread-safe `.numbers` buffering.
 - [ ] **[Backend]** **[DELETE]** Remove deprecated `S3WorkerService` from `itar`.
-- [ ] **[Frontend]** **[NEW]** Build `DataIntegrationsComponent`.
+- [ ] **[Frontend]** **[NEW]** Build the vertical `DataHubComponent` containing dual role-restricted tabs and polling.
 
 #### Verification Plan
-- [ ] **[Backend]** Unit Test: Worker correctly maps "USA" and "US Citizen" to `US_CITIZEN`.
-- [ ] **[Backend]** Integration Test: Worker successfully reads a mock file from S3 (using `moto`).
+- [ ] **[Backend]** Unit Test: Ingestion correctly maps raw strings to ENUMs.
+- [ ] **[Backend]** Integration Test: Webhook dynamically routes files based on name matches.
+- [ ] **[Frontend]** Component Test: Last sync badge polls and refreshes properly.
 
 ---
 

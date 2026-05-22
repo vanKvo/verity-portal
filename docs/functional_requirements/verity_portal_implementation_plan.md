@@ -66,20 +66,20 @@ Dynamic `requiredSchema` injection for specific audit types (HR vs. IT).
 - **FR-6.2:** Utilize custom ENUM for citizenship status to prevent data drift from imports.
 - **FR-6.3:** Track project sensitivity to specifically identify sensitive projects accessed by foreign nationals.
 
-## 🟡 Phase 7: Clearance & Training Watchdog (Planned)
-**Goal:** Monitor the temporal validity of credentials to prevent compliance lapses.
-- **FR-7.1:** Track both `last_training_date` and `training_expiration_date`.
-- **FR-7.2:** Perform proactive calculations to identify and display "Upcoming Violations".
-- **FR-7.3:** Enable Security Office intervention before clearances officially lapse.
-
-## 🟡 Phase 8: IT Asset & PO Audit (Planned)
+## 🟡 Phase 7: IT Asset & PO Audit (Planned)
 **Goal:** Reconcile Procurement (Finance) with physical Inventory (IT) to identify discrepancies.
-- **FR-8.1:** Track `po_number` alongside `asset_tag` to provide a financial audit trail.
-- **FR-8.2:** Identify "Ghost Assets" by comparing financial records against physical verification.
-- **FR-8.3:** Ensure maintenance and licensing are only paid for hardware in `IN_USE` status.
+- **FR-7.1:** Track `po_number` alongside `asset_tag` to provide a financial audit trail.
+- **FR-7.2:** Identify "Ghost Assets" by comparing financial records against physical verification.
+- **FR-7.3:** Ensure maintenance and licensing are only paid for hardware in `IN_USE` status.
 
-## 🟡 Phase 9: Labor Billing Audit (Planned)
+## 🟡 Phase 8: Labor Billing Audit (Planned)
 **Goal:** Enforce DCAA compliance by aligning billed labor with actual employee grades.
-- **FR-9.1:** Compare `labor_category` (government billing) with `actual_employee_grade` (HR verification).
-- **FR-9.2:** Identify instances of "Labor Category Creep" to prevent fraud allegations.
-- **FR-9.3:** Ensure contractual integrity between Accounting/Finance and HR systems.
+- **FR-8.1:** Compare `labor_category` (government billing) with `actual_employee_grade` (HR verification).
+- **FR-8.2:** Identify instances of "Labor Category Creep" to prevent fraud allegations.
+- **FR-8.3:** Ensure contractual integrity between Accounting/Finance and HR systems.
+
+## 🟡 Phase 9: Clearance & Training Watchdog (Planned)
+**Goal:** Monitor the temporal validity of credentials to prevent compliance lapses.
+- **FR-9.1:** Track both `last_training_date` and `training_expiration_date`.
+- **FR-9.2:** Perform proactive calculations to identify and display "Upcoming Violations".
+- **FR-9.3:** Enable Security Office intervention before clearances officially lapse.

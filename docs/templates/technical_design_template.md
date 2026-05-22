@@ -20,7 +20,7 @@ App Version: 1.0.0
 ---
 
 ## 2. Global Technical Context (The Contracts)
-*Developers: Read this section to understand the module-wide infrastructure and boundaries before starting any specific feature.*
+[Developers: Read this section to understand the module-wide]infrastructure and boundaries before starting any specific feature.*
 
 ### Data Model & Storage
 [How will this module store and manage state? Include schema definitions, partition keys, and indexing strategies. E.g., Entity Schema: (Provide a table or JSON schema), Data Lifecycle: (How long is data retained?)]
@@ -41,7 +41,7 @@ App Version: 1.0.0
 ---
 
 ## 3. Feature Implementation Breakdown
-*Developers: Read the block specific to your Jira ticket/Feature ID.*
+[Developers: Read the block specific to your Jira ticket/Feature ID.]
 
 ### Requirement ID: FR-X.X - [Feature Title]
 **Architectural Rationale:** [Technical reason for the design choice, e.g., Decoupling, Type Safety, Scalability.]

@@ -18,7 +18,7 @@
 - **Files:**
   - [List of modified or new files]
 - **Verify:**
-  - [Specific test commands or manual verification steps]
+  - [Specific test commands (e.g., 'poetry run pytest') and manual verification steps]
 
 *For Frontend Developers*
 - **Description:** [Brief summary of the UI/UX changes]
