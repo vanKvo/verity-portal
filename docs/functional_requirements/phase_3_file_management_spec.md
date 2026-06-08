@@ -1,6 +1,4 @@
----
-App Version: 1.0.0
----
+# Functional Specification: Phase 3 - File Management
 
 ## Objective
 Build a secure File Management Service to handle the lifecycle of data ingestion files, including staging, metadata tracking, and archival.

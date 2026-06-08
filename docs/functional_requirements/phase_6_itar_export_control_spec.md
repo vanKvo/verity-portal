@@ -1,7 +1,4 @@
 # Functional Specification: Phase 6 - ITAR & Export Control
----
-App Version: 1.1.0
----
 
 ## Document History / Changelog
 > [!WARNING]
@@ -60,7 +57,7 @@ Focus: User-driven choices that still result in a valid completion or safe exit.
 ### Non-Functional Requirements (Constraints)
 - **NFR-6.1.1: Performance.** The ingestion service must be able to process and map a roster of 50,000 assignments within 10 seconds.
 - **NFR-6.1.2: Idempotency.** Re-ingesting the exact same project roster must not result in duplicate assignment records or database errors.
-- **NFR-6.1.3: Security (RBAC).** The ingestion endpoint must be strictly protected by the `ROLE_PM` or `ROLE_ECO` roles to prevent unauthorized data uploads.
+- **NFR-6.1.3: Security (RBAC).** The ingestion endpoint must be strictly protected by the `ROLE_HR`, `ROLE_PM` or `ROLE_ECO` roles to prevent unauthorized data uploads.
 
 ### Verification Plan (Acceptance Criteria)
 - **AC-6.1.1:** Verify that ingesting a valid roster successfully populates the bridging table between Personnel and Projects.
@@ -75,7 +72,7 @@ Data drift from messy system exports (e.g., "US", "U.S.", "United States", "Citi
 
 ### User Story
 **As an** Export Control Officer or HR Administrator,
-**I want** the system to automatically ingest and normalize HR citizenship and Project sensitivity records via secure manual mapping and background S3 webhooks,
+**I want** the system to automatically ingest and normalize HR citizenship and Project sensitivity records via secure manual mapping or background S3 webhooks,
 **So that** I do not have to manually perform database imports or risk unrecognized data bypassing the compliance engine.
 
 ### Functional Requirements
@@ -93,12 +90,12 @@ Data drift from messy system exports (e.g., "US", "U.S.", "United States", "Citi
 ### User Interaction & Workflow
 #### Path 1: Basic Flow (Automated S3 Webhook Ingestion)
 Focus: Event-driven background ingestion and standardization of HR master data.
-- An external HR system drops the master employee roster spreadsheet (`hr_personnel_records_v5.numbers`) into a secure S3 bucket.
+- An external HR system drops the master employee roster spreadsheet such as (`hr_personnel_records_v5.numbers`) into a secure S3 bucket.
 - An S3 event triggers a POST request to the Verity Portal backend webhook (`/data-hub/webhooks/s3-ingest`).
 - FastAPI receives the payload, schedules a Background Task, and returns a `200 OK` "S3 Sync Triggered" response immediately to prevent timeout.
 - The background task securely downloads the file as a binary stream, writes it to a temporary `.numbers` buffer, parses the rows, and routes them to `PersonnelService` using the dynamic S3 router.
 - System processes the upserts, updating the database `updated_at` timestamp.
-- The user's active browser page polls `/data-hub/sync-status` and automatically displays the updated "Last Sync: May 22, 2026, 11:43:46 AM" without page reload.
+- The user's active browser will reload the page to display the updated "Last Sync: [timestamp]" from `/data-hub/sync-status`.
 
 #### Path 2: Exception Flows (Errors & Edge Cases)
 Focus: Handling unmappable or malformed background data.

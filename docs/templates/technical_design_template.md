@@ -65,9 +65,9 @@ App Version: 1.0.0
 - [ ] **[Frontend]** [Task description]
 
 #### Verification Plan
-- [ ] **[Backend]** [Unit Test description]
-- [ ] **[Frontend]** [Component Test description]
-- [ ] **[Integration]** [E2E test description]
+- [ ] **[Backend]** [Unit Test description and commands will be used to verify]
+- [ ] **[Frontend]** [Component Test description and commands will be used to verify]
+- [ ] **[Integration]** [E2E test description and commands will be used to verify]
 - [ ] **[Manual]** [Manual check step-by-step]
 
 ---

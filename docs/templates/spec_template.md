@@ -1,7 +1,4 @@
 # Functional Specification: [Phase Name]
----
-App Version: 1.0.0
----
 
 ## Objective
 [High-level goal of this phase]

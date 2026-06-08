@@ -1,6 +1,4 @@
----
-App Version: 1.0.0
----
+# Functional Specification: Phase 5.1 - Contextual Intake
 
 ## Objective
 This specification details the implementation steps for adding robust frontend validation, contextual schema injection, and graceful backend error handling to the Verity Portal. Developers must implement these tasks incrementally, verifying functionality before proceeding to the next.

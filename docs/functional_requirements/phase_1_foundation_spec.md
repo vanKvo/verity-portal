@@ -1,7 +1,5 @@
 # Phase 1: Foundation Specification
----
-App Version: 1.0.0
----
+
 ## Objective
 Initialize the project infrastructure, including the backend, frontend, and database environments, using a strict Python Feature-Based Layout (Vertical Slicing) and modern toolchains.
 

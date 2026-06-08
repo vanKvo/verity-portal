@@ -1,6 +1,4 @@
----
-App Version: 1.0.0
----
+# Functional Specification: Phase 5.2 - File Upload
 
 ## Objective
 Replace the manual Job ID text entry with an intuitive drag-and-drop file upload dropbox. This component will handle file validation, uploading, and seamlessly pass the resulting dataset (headers, suggestions, job ID) to the contextual mapper without manual user intervention.

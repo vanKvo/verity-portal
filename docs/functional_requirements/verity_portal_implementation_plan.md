@@ -60,26 +60,34 @@ Dynamic `requiredSchema` injection for specific audit types (HR vs. IT).
 
 ---
 
-## 🟡 Phase 6: ITAR & Export Control (Planned)
+## 🟢 Phase 6: ITAR & Export Control (Completed)
 **Goal:** Enforce ITAR compliance by managing personnel access to sensitive projects.
 - **FR-6.1:** Implement many-to-many relationship logic between personnel and projects.
 - **FR-6.2:** Utilize custom ENUM for citizenship status to prevent data drift from imports.
 - **FR-6.3:** Track project sensitivity to specifically identify sensitive projects accessed by foreign nationals.
 
-## 🟡 Phase 7: IT Asset & PO Audit (Planned)
+## 🟢 Phase 7: IT Asset & PO Audit (Completed)
 **Goal:** Reconcile Procurement (Finance) with physical Inventory (IT) to identify discrepancies.
 - **FR-7.1:** Track `po_number` alongside `asset_tag` to provide a financial audit trail.
 - **FR-7.2:** Identify "Ghost Assets" by comparing financial records against physical verification.
 - **FR-7.3:** Ensure maintenance and licensing are only paid for hardware in `IN_USE` status.
 
-## 🟡 Phase 8: Labor Billing Audit (Planned)
-**Goal:** Enforce DCAA compliance by aligning billed labor with actual employee grades.
-- **FR-8.1:** Compare `labor_category` (government billing) with `actual_employee_grade` (HR verification).
-- **FR-8.2:** Identify instances of "Labor Category Creep" to prevent fraud allegations.
-- **FR-8.3:** Ensure contractual integrity between Accounting/Finance and HR systems.
+## 🟢 Phase 8: Leaver/Mover Access Restructuring (Completed)
+**Goal:** Restructure the Leaver/Mover Access Audit module to support automated S3 ingestion of IT activity logs, persistent database violation tracking, dynamic email alerts, and an interactive tabbed dashboard.
+- **FR-8.1:** Automatically ingest IT activity logs via S3 event notifications and support manual uploads via the Shared Column Mapper.
+- **FR-8.2:** Persist compliance violations in the database with status tracking (`OPEN` and `RESOLVED`) and support resolution audits.
+- **FR-8.3:** Dispatch automated email notifications to the security office upon detecting post-termination login events.
+- **FR-8.4:** Restructure the frontend interface into dual tabs (Violations and Resolved) with a role-based modal dialog for violation resolution.
+- *Reference:* `phase_8_leaver_mover_restructure_spec.md`
 
-## 🟡 Phase 9: Clearance & Training Watchdog (Planned)
+## 🟡 Phase 9: Labor Billing Audit (Planned)
+**Goal:** Enforce DCAA compliance by aligning billed labor with actual employee grades.
+- **FR-9.1:** Compare `labor_category` (government billing) with `actual_employee_grade` (HR verification).
+- **FR-9.2:** Identify instances of "Labor Category Creep" to prevent fraud allegations.
+- **FR-9.3:** Ensure contractual integrity between Accounting/Finance and HR systems.
+
+## 🟡 Phase 10: Clearance & Training Watchdog (Planned)
 **Goal:** Monitor the temporal validity of credentials to prevent compliance lapses.
-- **FR-9.1:** Track both `last_training_date` and `training_expiration_date`.
-- **FR-9.2:** Perform proactive calculations to identify and display "Upcoming Violations".
-- **FR-9.3:** Enable Security Office intervention before clearances officially lapse.
+- **FR-10.1:** Track both `last_training_date` and `training_expiration_date`.
+- **FR-10.2:** Perform proactive calculations to identify and display "Upcoming Violations".
+- **FR-10.3:** Enable Security Office intervention before clearances officially lapse.

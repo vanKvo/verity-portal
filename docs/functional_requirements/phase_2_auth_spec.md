@@ -1,6 +1,4 @@
----
-App Version: 1.0.0
----
+# Functional Specification: Phase 2 - Authentication
 
 ## Objective
 Implement a secure, stateless authentication system that supports both permanent corporate users and frictionless guest access for demos.

@@ -1,6 +1,4 @@
----
-App Version: 1.0.0
----
+# Functional Specification: Phase 5 - Compliance Engine
 
 ## Objective
 Implement the analytical engine of Verity Portal, enabling automated Leaver/Mover audits and the generation of auditor-ready reports.

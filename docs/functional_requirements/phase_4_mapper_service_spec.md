@@ -1,6 +1,4 @@
----
-App Version: 1.0.0
----
+# Functional Specification: Phase 4 - Shared Mapper Service
 
 ## Objective
 Provide an intelligent data intake system that uses fuzzy logic to bridge the gap between messy source files and standardized system schemas.
