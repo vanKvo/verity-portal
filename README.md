@@ -54,24 +54,10 @@ Verity Portal integrates and reconciles disparate organizational data to automat
 
 ---
 
-The application supports two distinct network topologies depending on the target environment, prioritizing cost-efficiency in development and high availability in production.
+## Architectural Blueprint
 
-````carousel
-### Development & Demo Topology (Scale-to-Zero)
-```mermaid
-graph TD
-    User([User Browser]) -->|HTTPS| CF[CloudFront CDN]
-    CF -->|Static Assets| S3_Front[S3 Frontend Bucket]
-    CF -->|API/Backend Routes| AGW[API Gateway]
-    AGW -->|Invoke| Lambda_Back[AWS Lambda FastAPI]
-    Lambda_Back -->|Fetch Config| SSM[SSM Parameter Store]
-    Lambda_Back -->|Query| Neon[Neon Serverless Postgres]
-```
-**Key Highlights:**
-* **Neon Serverless PostgreSQL:** Automatically scales to zero compute when idle, resulting in $0 compute costs when inactive.
-* **Public Lambda Execution:** Deployed outside a VPC, eliminating the need for NAT Gateways.
-<!-- slide -->
-### Production Topology (High Availability & Security)
+The application is deployed inside a highly available and secure network topology in AWS:
+
 ```mermaid
 graph TD
     User([User Browser]) -->|HTTPS| CF[CloudFront CDN]
@@ -99,12 +85,12 @@ graph TD
     
     AGW -->|VPC Integration| Lambda_Prod
 ```
-**Key Highlights:**
+
+### Production Infrastructure Highlights
 * **AWS RDS PostgreSQL (Multi-AZ):** Configured with active-standby database failover across multiple availability zones for high availability and data durability.
 * **AWS RDS Proxy:** Pools connection requests from backend Lambda functions to prevent exhausting database connection limits during traffic spikes.
 * **Lambda in VPC:** Deployed within the VPC to allow secure private access to the RDS Proxy.
 * **Cost-Optimized VPC Endpoints:** Employs an S3 Gateway Endpoint (free) and SSM Interface Endpoint to bypass public internet routing for AWS service calls, eliminating expensive NAT Gateways.
-````
 
 ### 1. Vertical Slicing Architecture
 Verity Portal is structured under a **Feature-Based Layout (Vertical Slicing)** model. Instead of grouping code by technology layer (controllers, models, services), code is split by cohesive business domains (e.g., `itar`, `asset_audit`, `leaver_audit`, `data_hub`, `identity`, `intake`). This separation ensures that changing one domain's logic does not affect others and facilitates modular development, testing, and extension.
