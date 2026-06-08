@@ -1,0 +1,18 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude sensitive var files (already defined in variables.tf as sensitive, but added for safety)
+*.tfvars
+!environments/dev.tfvars
+!environments/prod.tfvars
+
+# Local zip packages
+*.zip
