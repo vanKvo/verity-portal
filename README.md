@@ -56,11 +56,75 @@ Verity Portal integrates and reconciles disparate organizational data to automat
 
 ## Architectural Blueprint
 
+### 1. Concept of Operations (ConOps)
+
+Verity Portal operates on a modular, three-phase operational workflow:
+
+```mermaid
+flowchart LR
+    subgraph Step1["1. Data Ingestion"]
+        Manual["Manual UI Upload"]
+        Auto["Automated S3 Log Sync"]
+    end
+
+    subgraph Step2["2. Reconciliation Engine"]
+        Rules["Rules Processing"]
+        DB[("PostgreSQL DB")]
+    end
+
+    subgraph Step3["3. Compliance Resolution"]
+        Console["Violation Console"]
+        Reports["PDF/CSV Export"]
+    end
+
+    Manual --> Rules
+    Auto --> Rules
+    Rules --> DB
+    DB --> Console
+    Console --> Reports
+```
+
+1. **Ingestion:** Data enters the portal through two channels: manual uploads via the Angular **Data Hub** interface (which leverages fuzzy mapping to resolve CSV/Excel/Numbers headers on the fly) or automated drop-zone events inside **Amazon S3** (which triggers background AWS Lambdas to ingest system logs asynchronously).
+2. **Reconciliation:** The FastAPI backend executes domain-specific rules (ITAR, Leaver/Mover Access, or Asset Inventory) to cross-reference the ingested spreadsheets against the system of record.
+3. **Resolution:** Audit findings and compliance violations are surfaced in role-based consoles. Compliance officers review issues, enter justifications for overrides, and generate tamper-resistant **PDF/CSV audit reports** for formal regulatory review.
+
+---
+
+### 2. Guided Ingestion & Audit Workflow (Asset Audit Example)
+
+The following diagram demonstrates the step-by-step user journey for executing an Asset Audit, showing how the application guides the user to complete prerequisites and view audit results seamlessly:
+
+```mermaid
+sequenceDiagram
+    actor User as Compliance User
+    participant Dashboard as Asset Audit Dashboard (Empty)
+    participant DataHub as Data Hub
+    participant Server as Backend API
+
+    Dashboard->>Dashboard: Renders with required files & columns
+    User->>Dashboard: Clicks "Begin Asset Audit Ingestion"
+    Dashboard->>DataHub: Navigates to Data Hub to upload files
+    
+    DataHub->>DataHub: Auto-filters upload options to only show relavant data templates (e.g., IT Assets & Procurement)
+    User->>DataHub: Uploads IT Assets file
+    User->>DataHub: Uploads Procurement file
+    DataHub->>Server: Submits & Normalizes both datasets
+    Server-->>DataHub: Success response
+    
+    DataHub->>DataHub: Displays success screen with the button: "View Asset Audit Results"
+    User->>DataHub: Clicks the "View Asset Audit Results" button
+    DataHub->>Dashboard: Navigates back to Asset Audit Dashboard (now fully populated)
+```
+
+---
+
+### 3. AWS Deployment Architecture
+
 The application is deployed inside a highly available and secure network topology in AWS:
 
 ```mermaid
 graph TD
-    User([User Browser]) -->|HTTPS| CF[CloudFront CDN]
+    UserBrowser([User Browser]) -->|HTTPS| CF[CloudFront CDN]
     CF -->|Static Assets| S3_Front[S3 Frontend Bucket]
     CF -->|API/Backend Routes| AGW[API Gateway]
     
@@ -86,13 +150,15 @@ graph TD
     AGW -->|VPC Integration| Lambda_Prod
 ```
 
-### Production Infrastructure Highlights
+#### Production Infrastructure Highlights
 * **AWS RDS PostgreSQL (Multi-AZ):** Configured with active-standby database failover across multiple availability zones for high availability and data durability.
 * **AWS RDS Proxy:** Pools connection requests from backend Lambda functions to prevent exhausting database connection limits during traffic spikes.
 * **Lambda in VPC:** Deployed within the VPC to allow secure private access to the RDS Proxy.
 * **Cost-Optimized VPC Endpoints:** Employs an S3 Gateway Endpoint (free) and SSM Interface Endpoint to bypass public internet routing for AWS service calls, eliminating expensive NAT Gateways.
 
-### 1. Vertical Slicing Architecture
+---
+
+## Software Architecture Patterns
 Verity Portal is structured under a **Feature-Based Layout (Vertical Slicing)** model. Instead of grouping code by technology layer (controllers, models, services), code is split by cohesive business domains (e.g., `itar`, `asset_audit`, `leaver_audit`, `data_hub`, `identity`, `intake`). This separation ensures that changing one domain's logic does not affect others and facilitates modular development, testing, and extension.
 
 ### 2. Retrieval Strategy Pattern (Data Hub Ingestion)

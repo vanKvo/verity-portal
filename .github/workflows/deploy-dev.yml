@@ -6,7 +6,9 @@ on:
       - main
     paths:
       - 'backend/**'
+      - 'backend' # for submodule
       - 'frontend/**'
+      - 'frontend' # for submodule
 
 jobs:
   trigger-dev-deploy:
