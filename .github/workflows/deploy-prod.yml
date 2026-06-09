@@ -1,0 +1,15 @@
+name: Deploy Prod
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  trigger-prod-deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: prod
+      aws_region: us-east-1
+      terraform_dir: terraform/environments/prod
+    secrets: inherit
