@@ -6,9 +6,11 @@ Verity Portal addresses these challenges by providing an automated ingestion, va
 
 ![Project Screenshot](images/verity-login-page.png)
 
+![Project Screenshot](images/verity-dashboard.png)
+
 ---
 
-## Core Features & Problems Solved
+## Key Features
 
 Verity Portal integrates and reconciles disparate organizational data to automate compliance checks across multiple domains:
 
@@ -41,7 +43,6 @@ Verity Portal integrates and reconciles disparate organizational data to automat
 * **Problem:** Organizations lose millions on "Ghost Assets"—paying licensing, support, and maintenance fees for physical hardware or software licenses that have been lost, retired, or stolen.
 * **Solution:** Links physical inventory (IT Hardware lists) with financial records (Procurement Purchase Orders) to track active lifecycles.
 * **Features:**
-  * Joins `po_number` records directly to physical `asset_tag` tracking.
   * Highlights anomalies where procurement is paying maintenance fees for hardware not registered in the IT inventory as `IN_USE`.
   * Flags unauthorized purchases and mismatched asset categories.
 
@@ -54,7 +55,7 @@ Verity Portal integrates and reconciles disparate organizational data to automat
 
 ---
 
-## Architectural Blueprint
+## High-Level Architecture
 
 ### 1. Concept of Operations (ConOps)
 
@@ -157,33 +158,46 @@ graph TD
 * **Cost-Optimized VPC Endpoints:** Employs an S3 Gateway Endpoint (free) and SSM Interface Endpoint to bypass public internet routing for AWS service calls, eliminating expensive NAT Gateways.
 
 ---
+## Tech Stack
 
-## Software Architecture Patterns
-Verity Portal is structured under a **Feature-Based Layout (Vertical Slicing)** model. Instead of grouping code by technology layer (controllers, models, services), code is split by cohesive business domains (e.g., `itar`, `asset_audit`, `leaver_audit`, `data_hub`, `identity`, `intake`). This separation ensures that changing one domain's logic does not affect others and facilitates modular development, testing, and extension.
+* **Frontend:**
+  * Angular 21 (Standalone Components, Signals, RxJS Reactive Streams)
+  * Angular Material Component Suite
+  * Vanilla CSS with CSS Custom Properties
+* **Backend:**
+  * Python 3.11 - 3.14 (3.13.9 recommended)
+  * FastAPI (RESTful API Gateway orchestration)
+  * Pandas (Spreadsheet processing and normalization)
+  * `thefuzz` (Fuzzy logic header recommendation algorithm)
+  * `fpdf2` (Dynamic PDF generator)
+* **Database:**
+  * PostgreSQL (Relational and JSONB document storage)
+  * SQLAlchemy (Python Object Relational Mapper)
+  * Alembic (Incremental database migrations)
+* **Cloud Infrastructure (AWS):**
+  * CloudFront (CDN proxy & SPA routing)
+  * API Gateway & AWS Lambda (Serverless FastAPI execution)
+  * Simple Storage Service (S3) (Operational data drops and static assets)
+  * ECR (Elastic Container Registry for Lambda container packaging)
+  * AWS WAF (Web Application Firewall protection)
+  * Route 53 & AWS Certificate Manager (ACM) (Single Domain DNS and SSL)
+  * Terraform (Infrastructure-as-Code orchestration)
 
-### 2. Retrieval Strategy Pattern (Data Hub Ingestion)
-To support both manual file drops in the UI and automated S3 background synchronizations, the system abstracts data retrieval:
-* **`BaseRetrievalStrategy` (Interface):** Defines the standard contract for spreadsheet stream extraction.
-* **`ManualUploadStrategy` (Concrete):** Streams files uploaded directly via the user's browser session.
-* **`S3EventStrategy` (Concrete):** Streams files from AWS S3 buckets when triggered by automated event webhooks.
-* **`RetrievalStrategyFactory`:** Dynamically instantiates the correct strategy depending on the entry point, passing standard dataframes to the parsing and database logic.
+---
+## Security Model & Access Controls
 
-### 3. Concurrency-Locked Token Refresh Flow
-To balance session security with a frictionless user experience, the system employs an **Access + HttpOnly Refresh Token Flow**:
-* Access tokens are short-lived (30 minutes) and stored in client-side memory.
-* Refresh tokens are long-lived (7 days) and stored in secure, cryptographically signed, `HttpOnly`, `SameSite=Lax` cookies.
-* To prevent race conditions from concurrent dashboard requests triggering duplicate refresh requests (which violates strict token rotation), the Angular HTTP interceptor implements a RxJS-based concurrency mutex lock to serialize token renewal.
+The platform implements strict access controls to maintain appropriate segregation of duties (SoD) across compliance roles:
 
-### 4. Single Domain CloudFront Reverse Proxy
-Rather than deploying frontend and backend to separate subdomains (which introduces CORS preflight overhead and prevents `SameSite` HttpOnly cookie configurations), the entire platform is served under a single subdomain (`verityportal.vanmuses.com`):
-* CloudFront routes path-based behaviors (e.g., `/auth/*`, `/data-hub/*`, `/leaver-audit/*`) directly to the API Gateway.
-* Static Angular assets are served from S3 via Origin Access Control (OAC).
-* A custom edge CloudFront Function (`spa_rewrite`) intercepts viewer requests to map SPA paths (like `/dashboard`) to `/index.html` without invoking API redirects or exposing S3 bucket details.
-
-### 5. Serverless Scale-to-Zero Hosting
-The FastAPI backend is fully containerized and deployed to **AWS Lambda**:
-* Configured with **1536MB of RAM** (assigning 1 full vCPU) to mitigate cold-start module import overhead, keeping cold starts under 3 seconds.
-* Integrates with **AWS WAF** (Web Application Firewall) attached directly to CloudFront to shield the backend from scanner discovery and brute force attacks.
+* **Role-Based Access Control (RBAC):**
+  * **`ROLE_HR` (HR Personnel Manager):** Permitted to view and upload sensitive Personnel records (e.g. citizenship status, termination dates). Access restricted from viewing project financial values or IT system actions.
+  * **`ROLE_PM` (Project Manager):** Permitted to manage project rosters, assign employees, and trigger ITAR reconciliation audits.
+  * **`ROLE_ECO` (Export Control Officer):** High-privilege auditing role permitted to review ITAR/export violations, review access logs, and record official compliance justifications and resolutions.
+  * **`ROLE_IT` (IT System Administrator):** Permitted to manage and upload hardware inventory lists and IT login logs.
+  * **`ROLE_FINANCE` (Financial Auditor):** Permitted to view Procurement data and PO audits, and resolve financial inventory discrepancies (e.g. Ghost Assets).
+* **Data Ingestion Security Constraints:**
+  * Rigid 50MB file size limits enforced at API and proxy levels to prevent denial-of-service (DoS) attempts.
+  * Client and server-side MIME-type and extension checks restrict uploads to validated spreadsheet structures (`.csv`, `.xlsx`, `.numbers`).
+  * Dedicated PostgreSQL schema `verity` isolates operational compliance metadata from unstructured raw staging uploads (JSONB data store).
 
 ---
 
@@ -208,44 +222,3 @@ Key architectural decisions are documented in the [architecture_decision_records
 
 ---
 
-## Security Model & Access Controls
-
-The platform implements strict access controls to maintain appropriate segregation of duties (SoD) across compliance roles:
-
-* **Role-Based Access Control (RBAC):**
-  * **`ROLE_HR` (HR Personnel Manager):** Permitted to view and upload sensitive Personnel records (e.g. citizenship status, termination dates). Access restricted from viewing project financial values or IT system actions.
-  * **`ROLE_PM` (Project Manager):** Permitted to manage project rosters, assign employees, and trigger ITAR reconciliation audits.
-  * **`ROLE_ECO` (Export Control Officer):** High-privilege auditing role permitted to review ITAR/export violations, review access logs, and record official compliance justifications and resolutions.
-  * **`ROLE_IT` (IT System Administrator):** Permitted to manage and upload hardware inventory lists and IT login logs.
-  * **`ROLE_FINANCE` (Financial Auditor):** Permitted to view Procurement data and PO audits, and resolve financial inventory discrepancies (e.g. Ghost Assets).
-* **Data Ingestion Security Constraints:**
-  * Rigid 50MB file size limits enforced at API and proxy levels to prevent denial-of-service (DoS) attempts.
-  * Client and server-side MIME-type and extension checks restrict uploads to validated spreadsheet structures (`.csv`, `.xlsx`, `.numbers`).
-  * Dedicated PostgreSQL schema `verity` isolates operational compliance metadata from unstructured raw staging uploads (JSONB data store).
-
----
-
-## Tech Stack Summary
-
-* **Frontend:**
-  * Angular 21 (Standalone Components, Signals, RxJS Reactive Streams)
-  * Angular Material Component Suite
-  * Vanilla CSS with CSS Custom Properties
-* **Backend:**
-  * Python 3.11 - 3.14 (3.13.9 recommended)
-  * FastAPI (RESTful API Gateway orchestration)
-  * Pandas (Spreadsheet processing and normalization)
-  * `thefuzz` (Fuzzy logic header recommendation algorithm)
-  * `fpdf2` (Dynamic PDF generator)
-* **Database:**
-  * PostgreSQL (Relational and JSONB document storage)
-  * SQLAlchemy (Python Object Relational Mapper)
-  * Alembic (Incremental database migrations)
-* **Cloud Infrastructure (AWS):**
-  * CloudFront (CDN proxy & SPA routing)
-  * API Gateway & AWS Lambda (Serverless FastAPI execution)
-  * Simple Storage Service (S3) (Operational data drops and static assets)
-  * ECR (Elastic Container Registry for Lambda container packaging)
-  * AWS WAF (Web Application Firewall protection)
-  * Route 53 & AWS Certificate Manager (ACM) (Single Domain DNS and SSL)
-  * Terraform (Infrastructure-as-Code orchestration)
