@@ -556,7 +556,7 @@ resource "aws_lambda_function" "s3_ingest" {
 
   environment {
     variables = {
-      WEBHOOK_URL = "https://verityportal.${var.domain_name}/data-hub/webhooks/s3-ingest"
+      WEBHOOK_URL = "https://verityportal.vanmuses.com/data-hub/webhooks/s3-ingest"
       ENVIRONMENT = var.environment
     }
   }

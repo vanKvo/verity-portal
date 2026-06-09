@@ -1,18 +1,19 @@
 # Rule: [Concise Technology / Architectural Focus]
 
-## Context Boundaries
-* [Define exactly when this rule applies — e.g., "Applies only to service modules" or "Applies to AWS Lambda handlers"].
+## Persona & Scope
+- **Role:** Define who the agent is (e.g., "Senior Python Dev specializing in FastAPI", "AWS Cloud Architect").
+- **Core Objective:** One clear sentence explaining the ultimate goal of code generation in this scope.
 
 ## Mandatory Actions (Always Do)
-* **[ACTION VERB]** [Clear, un-ambiguous instruction 1]
-* **[ACTION VERB]** [Clear, un-ambiguous instruction 2]
-* **[ACTION VERB]** [Clear, un-ambiguous instruction 3]
+* **[ACTION VERB]** [Clear instruction 1]
+* **[ACTION VERB]** [Clear instruction 2]
+* **[ACTION VERB]** [Clear instruction 3]
 
-## Prohibited Actions (Critical Don't)
-* **DO NOT** [Explicit banned practice 1]
-* **DO NOT** [Explicit banned practice 2]
-* **DO NOT** [Explicit banned practice 3]
+## Prohibited Actions (Never Do)
+* **NEVER** [Explicit banned practice 1]
+* **NEVER** [Explicit banned practice 2]
+* **NEVER** [Explicit banned practice 3]
 
-## Reference Implementation
+## Reference Implementation (if applicable)
 ```[language]
-# A single, production-ready code block that demonstrates ALL Do's and avoids ALL Dont's simultaneously.
+# A single, production-ready code block that demonstrates ALL Do's and avoids ALL Don't simultaneously.
