@@ -58,6 +58,41 @@ resource "aws_ssm_parameter" "secret_key" {
   value       = var.backend_secret_key
 }
 
+resource "aws_ssm_parameter" "frontend_bucket" {
+  name        = "/verity-portal/${var.environment}/frontend_bucket"
+  description = "S3 bucket ID for frontend static hosting"
+  type        = "String"
+  value       = aws_s3_bucket.frontend.id
+}
+
+resource "aws_ssm_parameter" "cloudfront_distribution_id" {
+  name        = "/verity-portal/${var.environment}/cloudfront_distribution_id"
+  description = "CloudFront distribution ID for frontend CDN"
+  type        = "String"
+  value       = aws_cloudfront_distribution.frontend_cf.id
+}
+
+resource "aws_ssm_parameter" "backend_lambda_name" {
+  name        = "/verity-portal/${var.environment}/backend_lambda_name"
+  description = "AWS Lambda function name for the FastAPI backend"
+  type        = "String"
+  value       = aws_lambda_function.backend.function_name
+}
+
+resource "aws_ssm_parameter" "backend_ecr_url" {
+  name        = "/verity-portal/${var.environment}/backend_ecr_url"
+  description = "AWS ECR repository URL for backend Docker container images"
+  type        = "String"
+  value       = aws_ecr_repository.backend.repository_url
+}
+
+resource "aws_ssm_parameter" "domain_name" {
+  name        = "/verity-portal/${var.environment}/domain_name"
+  description = "Root domain name for Route 53 and ACM certificates"
+  type        = "String"
+  value       = var.domain_name
+}
+
 # --- Database Migration Runner ---
 # Run Alembic upgrade head against database endpoint directly from the deployment runner.
 resource "null_resource" "run_migrations" {
@@ -481,7 +516,7 @@ resource "aws_s3_object" "folder_it_activity" {
 # --- S3 Ingestion Notification trigger Lambda ---
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_file = "${path.module}/s3_ingest_lambda_function.py"
+  source_file = "${path.module}/../../../backend/src/verity_portal/data_hub/s3_ingest_lambda_function.py"
   output_path = "${path.module}/s3_ingest_lambda_function.zip"
 }
 

@@ -3,7 +3,7 @@ name: Deploy Prod
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # Triggers on tagged version pushes (e.g. v*), facilitating audited deployment to the Prod environment.
 
 jobs:
   trigger-prod-deploy:
@@ -11,5 +11,4 @@ jobs:
     with:
       environment: prod
       aws_region: us-east-1
-      terraform_dir: terraform/environments/prod
     secrets: inherit
