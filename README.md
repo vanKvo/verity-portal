@@ -60,7 +60,7 @@ Verity Portal cross-references and reconciles data from different departments to
 
 ## High-Level Architecture
 
-### 1. Concept of Operations (ConOps)
+### 1. Concept of Operations
 
 Verity Portal operates on a modular, three-phase operational workflow:
 
@@ -122,9 +122,9 @@ sequenceDiagram
 
 ---
 
-### 3. AWS Deployment Architecture (Enterprise-Grade & Cost-Optimized)
+### 3. AWS Deployment Architecture
 
-The production environment is deployed inside a highly available, multi-AZ network topology adhering strictly to the **AWS Well-Architected Framework**:
+The production environment is deployed inside a highly available, multi-AZ, and secure network topology:
 
 ```mermaid
 flowchart TD
@@ -277,6 +277,4 @@ Key architectural decisions are documented in the [architecture_decision_records
 | **[ADR-010](file:///Users/gabong/Documents/Programming/verity-portal/docs/architecture_decision_records/ADR-010-token-refresh-strategy.md)** | Concurrency-locked token refresh strategy with secure HttpOnly cookies. |
 | **[ADR-011](file:///Users/gabong/Documents/Programming/verity-portal/docs/architecture_decision_records/ADR-011-single-domain-cloudfront-reverse-proxy.md)** | Single Domain CloudFront Reverse Proxy topology to eliminate CORS and shield APIs. |
 | **[ADR-012](file:///Users/gabong/Documents/Programming/verity-portal/docs/architecture_decision_records/ADR-012-lambda-cold-start-and-initialization-timeout-remediation.md)** | AWS Lambda memory scaling and environment configuration for sub-3s cold starts. |
-
----
 
