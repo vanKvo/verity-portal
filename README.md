@@ -277,4 +277,6 @@ Key architectural decisions are documented in the [architecture_decision_records
 | **[ADR-010](file:///Users/gabong/Documents/Programming/verity-portal/docs/architecture_decision_records/ADR-010-token-refresh-strategy.md)** | Concurrency-locked token refresh strategy with secure HttpOnly cookies. |
 | **[ADR-011](file:///Users/gabong/Documents/Programming/verity-portal/docs/architecture_decision_records/ADR-011-single-domain-cloudfront-reverse-proxy.md)** | Single Domain CloudFront Reverse Proxy topology to eliminate CORS and shield APIs. |
 | **[ADR-012](file:///Users/gabong/Documents/Programming/verity-portal/docs/architecture_decision_records/ADR-012-lambda-cold-start-and-initialization-timeout-remediation.md)** | AWS Lambda memory scaling and environment configuration for sub-3s cold starts. |
+| **[ADR-013](file:///Users/gabong/Documents/Programming/verity-portal/docs/architecture_decision_records/ADR-013-session-lifespan-and-api-caching-mitigation.md)** | Session lifespan scoping (sessionStorage) and API caching prevention middleware. |
+| **[ADR-014](file:///Users/gabong/Documents/Programming/verity-portal/docs/architecture_decision_records/ADR-014-aws-production-deployment-architecture-alignment.md)** | AWS Production Deployment architecture alignment against the Well-Architected Framework. |
 
