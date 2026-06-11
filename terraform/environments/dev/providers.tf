@@ -33,5 +33,5 @@ provider "aws" {
 }
 
 provider "neon" {
-  api_key = var.neon_api_key != "" ? var.neon_api_key : "dummy_api_key"
+  api_key = var.neon_api_key
 }
