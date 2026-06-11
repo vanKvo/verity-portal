@@ -4,54 +4,57 @@ Verity Portal is a production-grade enterprise compliance platform designed to e
 
 Verity Portal addresses these challenges by providing an automated ingestion, validation, and domain-driven reconciliation engine that cross-references different datasets against a centralized system of record. The portal proactively flags compliance anomalies, such as Export Control (ITAR/EAR) breaches, post-termination IT system access, and financial IT inventory discrepancies, while providing non-editable, auditor-ready documentation.
 
+Demo App Link: https://verityportal.vanmuses.com
+
 ![Project Screenshot](images/verity-login-page.png)
 
 ![Project Screenshot](images/verity-dashboard.png)
+
 
 ---
 
 ## Key Features
 
-Verity Portal integrates and reconciles disparate organizational data to automate compliance checks across multiple domains:
+Verity Portal cross-references and reconciles data from different departments to automatically detect and flag compliance errors across your organization:
 
 ### 1. Intelligent Data Ingestion & Schema Alignment (Data Hub)
-* **Problem:** Messy and inconsistent column headers in spreadsheets supplied by different departments prevent automated database ingestion.
-* **Solution:** A **Shared Column Mapper Engine** that utilizes fuzzy logic string matching to automatically suggest alignments between user spreadsheet headers and standardized database attributes.
+* **Problem:** Different departments format their spreadsheets differently (for example, one team writes "Full Name" while another writes "employee_name"). This makes it impossible for standard software to automatically read and combine data without slow, error-prone manual cleanup.
+* **Solution:** An **Intelligent Column Matching System** that automatically reads uploaded spreadsheets, recognizes similarly named columns (like matching "Emp_Name" to "Employee Name"), and suggests the correct alignment to the user.
 * **Features:**
-  * Interactive drag-and-drop file upload Dropbox (custom Angular component) supporting CSV, Excel, and Apple Numbers formats.
-  * Context-aware dynamic mapping templates (`requiredSchema`) that adjust validation constraints based on the audit type (e.g., HR records vs. IT logs).
-  * Guided audit workflow wizard utilizing Angular Material (`MatStepper`) to walk users through upload, mapping validation, and execution.
+  * Interactive drag-and-drop file uploader supporting standard CSV, Microsoft Excel, and Apple Numbers formats.
+  * Smart upload templates that adjust dynamically to verify file contents based on the type of audit (such as checking HR personnel records vs. IT login logs).
+  * A step-by-step guided wizard that walks users through uploading, mapping columns, and executing compliance runs without getting lost.
 
 ### 2. ITAR & Export Control Compliance
-* **Problem:** Export Control regulations (like ITAR and EAR) impose heavy criminal and financial penalties if unauthorized Foreign Nationals gain access to sensitive or defense-related project data.
-* **Solution:** Reconciles personnel records against project rosters using many-to-many relationship tracking to verify data access eligibility.
+* **Problem:** Government export regulations (like ITAR and EAR) impose severe legal and financial penalties on defense or aerospace organizations if foreign nationals gain unauthorized access to restricted project data.
+* **Solution:** An automated verification system that instantly cross-references personnel citizenship status against active project rosters to verify and flag unauthorized access.
 * **Features:**
-  * Uses strict database `ENUM` boundaries for citizenship status to prevent data drift from inconsistent manual inputs.
-  * Tracks project sensitivity and automatically flags foreign nationals assigned to restricted projects.
-  * Provides Export Control Officers (ECO) with a dedicated compliance validation dashboard.
+  * Standardized citizenship inputs to prevent typographical errors or inconsistent values from corrupting audit data.
+  * Active monitoring that flags when a foreign national is assigned to restricted or sensitive projects.
+  * A dedicated validation dashboard for Export Control Officers (ECOs) to review permissions and authorize overrides.
 
 ### 3. Leaver/Mover Access Audit
-* **Problem:** Terminated or transferred employees frequently retain active accounts in IT systems due to delays in deprovisioning workflows (violating CMMC 2.0, SOC 2, and ISO 27001 controls).
-* **Solution:** Automated cross-referencing of HR termination and transfer dates against IT activity logs to identify post-employment activity.
+* **Problem:** When employees leave a company or transfer departments, their accounts on IT systems are frequently left active due to delays in communication. This creates severe security risks and violates regulatory audits (such as SOC 2, CMMC, and ISO 27001).
+* **Solution:** Automated cross-checking that compares HR termination/transfer dates against actual IT login activity to immediately catch post-employment actions.
 * **Features:**
-  * Hybrid ingestion supporting both manual spreadsheet uploads and automated event-driven AWS S3 log drops.
-  * Persistent database violation tracking supporting `OPEN` and `RESOLVED` workflow states.
-  * Real-time backend email alerts dispatched to the Security Office upon detection of post-termination login attempts.
-  * Dual-tab frontend violation console (Violations / Resolved) with a secure, role-based dialog for logging audit overrides and resolution justifications.
+  * Dual-mode ingestion that supports both manual spreadsheet uploads and automated system log imports.
+  * An audit status console to track violations from the moment they are detected until they are resolved.
+  * Real-time email alerts dispatched to security teams upon detection of post-termination login attempts.
+  * A secure resolution log where managers can enter official justifications and audit overrides for record-keeping.
 
 ### 4. IT Asset & Purchase Order Reconciliation
-* **Problem:** Organizations lose millions on "Ghost Assets"—paying licensing, support, and maintenance fees for physical hardware or software licenses that have been lost, retired, or stolen.
-* **Solution:** Links physical inventory (IT Hardware lists) with financial records (Procurement Purchase Orders) to track active lifecycles.
+* **Problem:** Organizations waste millions on "Ghost Assets"—paying licensing, support, and maintenance fees for physical hardware or software licenses that have actually been retired, lost, or stolen.
+* **Solution:** A reconciliation link connecting physical hardware inventory lists with financial purchase orders to track active assets and their costs.
 * **Features:**
-  * Highlights anomalies where procurement is paying maintenance fees for hardware not registered in the IT inventory as `IN_USE`.
-  * Flags unauthorized purchases and mismatched asset categories.
+  * Identifies discrepancies where the finance department is paying service fees for hardware that IT does not list as active or in use.
+  * Instantly flags unauthorized technology purchases and mismatched asset categories.
 
 ### 5. Auditor-Ready Reporting
-* **Problem:** Exporting audit logs as raw text or standard spreadsheets is insufficient for formal compliance reviews, as they can be easily modified or falsified.
-* **Solution:** A tamper-resistant backend reporting engine that generates official audit documentation.
+* **Problem:** Sharing compliance audit logs in standard formats like raw text or spreadsheets is insufficient for formal compliance reviews because these files can be easily edited, deleted, or falsified.
+* **Solution:** A secure, tamper-resistant reporting engine that generates official, unalterable audit documentation.
 * **Features:**
-  * Generates structured, non-editable PDF reports (utilizing `fpdf2`) detailing the audit scope, timestamps, and list of violations.
-  * Exports sanitized CSV datasets for secure import into external compliance archives or downstream systems.
+  * Generates structured, tamper-proof PDF reports detailing the audit time, scope, and detected violations.
+  * Exports clean, structured CSV datasets for secure archiving or loading into external auditing systems.
 
 ---
 
@@ -91,7 +94,7 @@ flowchart LR
 
 ---
 
-### 2. Guided Ingestion & Audit Workflow (Asset Audit Example)
+### 2. The Guided Ingestion & Audit Workflow (Asset Audit Example)
 
 The following diagram demonstrates the step-by-step user journey for executing an Asset Audit, showing how the application guides the user to complete prerequisites and view audit results seamlessly:
 
@@ -119,43 +122,98 @@ sequenceDiagram
 
 ---
 
-### 3. AWS Deployment Architecture
+### 3. AWS Deployment Architecture (Enterprise-Grade & Cost-Optimized)
 
-The application is deployed inside a highly available and secure network topology in AWS:
+The production environment is deployed inside a highly available, multi-AZ network topology adhering strictly to the **AWS Well-Architected Framework**:
 
 ```mermaid
-graph TD
-    UserBrowser([User Browser]) -->|HTTPS| CF[CloudFront CDN]
-    CF -->|Static Assets| S3_Front[S3 Frontend Bucket]
-    CF -->|API/Backend Routes| AGW[API Gateway]
-    
-    subgraph VPC [AWS VPC: 10.0.0.0/16]
-        subgraph Subnets [Public Subnets us-east-1a & 1b]
-            Lambda_Prod[AWS Lambda FastAPI]
-            Proxy[AWS RDS Proxy]
-            RDS[(RDS Postgres Multi-AZ)]
+flowchart TD
+    %% Horizontal layout ordering for external clients (Left-to-Right)
+    DataDrop([Operational Data Drop])
+    UserBrowser([User Browser])
+    DevSQLClient([Developer SQL Client])
+
+    subgraph AWS [AWS Cloud]
+        %% Horizontal layout ordering of services inside AWS Cloud
+        S3_Ingest_Lambda[AWS S3 Ingest Lambda]
+        AGW[API Gateway]
+        CF[CloudFront CDN]
+        SSM_Service[AWS Systems Manager]
+        SSM_Param[AWS SSM Parameter Store]
+        
+        subgraph VPC [AWS VPC: 10.0.0.0/16]
+            subgraph PrivateSubnets [Private App Subnets - 2 AZs]
+                Lambda_Prod[AWS Lambda FastAPI]
+                RDS_Proxy[RDS Proxy]
+                EC2_SSM[EC2 SSM Tunnel Instance]
+                
+                %% VPC Endpoints
+                InterfaceSSM[SSM VPC Interface Endpoint]
+            end
+            
+            subgraph IsolatedDbSubnets [Isolated Database Subnets - 2 AZs]
+                RDS[(RDS Postgres Multi-AZ)]
+            end
+            
+            %% VPC Internal Routing
+            Lambda_Prod --> GatewayS3
+            Lambda_Prod -->|SG Ingress: Port 5432| RDS_Proxy
+            RDS_Proxy -->|SG Ingress: Port 5432| RDS            
+            Lambda_Prod --> InterfaceSSM
+            
+            InterfaceSSM -.-> |SSM Agent Connection| EC2_SSM
+            EC2_SSM -->|Forward TCP 5432| RDS_Proxy
+        end
+
+        subgraph S3 [AWS S3 - Global Services]
+            S3_Front[S3 Frontend Bucket]
+            S3_Ingest[S3 Ingest Bucket]
+            S3DataBucket[S3 Data Bucket]
         end
         
-        Secrets[Secrets Manager]
-        Proxy -.-> |Reads Creds| Secrets
-        
-        GatewayS3[S3 VPC Gateway Endpoint]
-        InterfaceSSM[SSM VPC Interface Endpoint]
-        
-        Lambda_Prod -->|Port 5432| Proxy
-        Proxy -->|Connection Pooling| RDS
-        Lambda_Prod --> GatewayS3 --> S3_Ingest[S3 Ingest Bucket]
-        Lambda_Prod --> InterfaceSSM --> SSM_Param[SSM Parameter Store]
+       
     end
+
+    %% External Connections
+    DataDrop -->|Upload CSV/XLSX| S3_Ingest
+    S3_Ingest -->|S3 Event: ObjectCreated| S3_Ingest_Lambda
+    S3_Ingest_Lambda -->|Forward Webhook POST| AGW
+    GatewayS3[S3 VPC Gateway Endpoint]
     
-    AGW -->|VPC Integration| Lambda_Prod
+    UserBrowser -->|HTTPS| CF
+    CF -.->|Static Assets| S3_Front
+    CF -->|API/Backend Routes| AGW
+    
+    DevSQLClient -->|SSM Session Tunnel| SSM_Service
+    
+    %% VPC Externalized Endpoint Connections
+    GatewayS3 --> S3
+    InterfaceSSM --> SSM_Param
+    SSM_Service -->|Secure IAM Tunnel| InterfaceSSM
+    
+    AGW -->|Invokes| Lambda_Prod
 ```
 
 #### Production Infrastructure Highlights
-* **AWS RDS PostgreSQL (Multi-AZ):** Configured with active-standby database failover across multiple availability zones for high availability and data durability.
-* **AWS RDS Proxy:** Pools connection requests from backend Lambda functions to prevent exhausting database connection limits during traffic spikes.
-* **Lambda in VPC:** Deployed within the VPC to allow secure private access to the RDS Proxy.
-* **Cost-Optimized VPC Endpoints:** Employs an S3 Gateway Endpoint (free) and SSM Interface Endpoint to bypass public internet routing for AWS service calls, eliminating expensive NAT Gateways.
+
+* **Isolated Subnet Layers (Security Best Practice)**:
+  * **Private App Subnets**: Isolate the Lambda functions, the RDS Proxy, and the EC2 SSM Tunnel instance from direct internet exposure.
+  * **Private Database Subnets**: Lock down the RDS PostgreSQL instance. The database is private with no direct route to the internet.
+* **SSM Session Manager Tunneling**:
+  * The EC2 SSM Tunnel instance has zero open inbound ports** and no public IP, residing entirely in the private subnets.
+  * It communicates with the AWS Systems Manager service privately via the VPC Interface Endpoint. 
+  * Administrators establish a secure local forwarding tunnel to the database proxy over HTTPS using AWS Systems Manager, authenticated purely via IAM policies (eliminating SSH keys).
+* **SSM Parameter Store Secure Strings (Secrets Management)**:
+  * All sensitive credentials (such as database passwords and JWT secret keys) are stored as encrypted SSM Parameter Store Secure Strings (KMS-encrypted).
+  * Lambda functions pull these secrets privately via the SSM VPC Interface Endpoint, eliminating the need and monthly cost for AWS Secrets Manager.
+* **Layered Security Groups (Least Privilege)**:
+  * **Lambda SG** allows egress only to the RDS Proxy SG (port 5432) and the VPC Endpoints (port 443).
+  * **RDS Proxy SG** accepts ingress ONLY from the Lambda SG (port 5432) and the EC2 SSM Tunnel SG (port 5432). It permits egress strictly to the RDS Database SG (port 5432).
+  * **RDS Database SG** accepts ingress ONLY from the RDS Proxy SG (port 5432).
+* **Cost-Optimized VPC Endpoints**:
+  * Private resources communicate with S3 and SSM privately within the VPC using Endpoints.
+  * Employs an S3 Gateway Endpoint (free) and a single Interface Endpoint for SSM, bypassing the need for expensive NAT Gateways and saving over 50% in base network overhead.
+* **AWS RDS PostgreSQL (Multi-AZ)**: Configured with active-standby database failover across multiple availability zones for high availability and data durability.
 
 ---
 ## Tech Stack
