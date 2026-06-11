@@ -4,8 +4,6 @@ Verity Portal is a production-grade enterprise compliance platform designed to e
 
 Verity Portal addresses these challenges by providing an automated ingestion, validation, and domain-driven reconciliation engine that cross-references different datasets against a centralized system of record. The portal proactively flags compliance anomalies, such as Export Control (ITAR/EAR) breaches, post-termination IT system access, and financial IT inventory discrepancies, while providing non-editable, auditor-ready documentation.
 
-Demo App Link: https://verityportal.vanmuses.com
-
 ![Project Screenshot](images/verity-login-page.png)
 
 ![Project Screenshot](images/verity-dashboard.png)
