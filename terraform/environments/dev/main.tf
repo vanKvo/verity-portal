@@ -36,4 +36,5 @@ module "core_infrastructure" {
   database_url           = "postgresql://${neon_role.db_role.name}:${neon_role.db_role.password}@${neon_project.db_project.database_host}/${neon_database.db.name}?sslmode=require"
   vpc_subnet_ids         = []
   vpc_security_group_ids = []
+  sns_topic_arn          = var.sns_topic_arn
 }

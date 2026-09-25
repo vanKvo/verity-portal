@@ -8,9 +8,9 @@ data "aws_route53_zone" "primary" {
 # Create custom SSL certificates for verityportal
 # Must target the alias provider in us-east-1 for CloudFront compatibility.
 resource "aws_acm_certificate" "cert" {
-  provider                  = aws.us_east_1
-  domain_name               = "verityportal.${var.domain_name}"
-  validation_method         = "DNS"
+  provider          = aws.us_east_1
+  domain_name       = "verityportal.${var.domain_name}"
+  validation_method = "DNS"
 
   lifecycle {
     create_before_destroy = true
@@ -193,6 +193,11 @@ resource "aws_iam_policy" "backend_lambda_policy" {
           aws_s3_bucket.ingest_bucket.arn,
           "${aws_s3_bucket.ingest_bucket.arn}/*"
         ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = var.sns_topic_arn
       }
     ]
   })
@@ -218,6 +223,7 @@ resource "aws_lambda_function" "backend" {
       ENVIRONMENT       = var.environment
       ALLOWED_ORIGINS   = "https://verityportal.${var.domain_name}"
       S3_HR_BUCKET_NAME = aws_s3_bucket.ingest_bucket.id
+      AWS_SNS_TOPIC_ARN = var.sns_topic_arn
       REBUILD_TRIGGER   = null_resource.build_push_backend.id
     }
   }
@@ -421,8 +427,8 @@ resource "aws_s3_bucket_policy" "frontend_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCloudFrontServicePrincipalReadOnly"
-        Effect    = "Allow"
+        Sid    = "AllowCloudFrontServicePrincipalReadOnly"
+        Effect = "Allow"
         Principal = {
           Service = "cloudfront.amazonaws.com"
         }
@@ -543,16 +549,16 @@ resource "aws_iam_role_policy_attachment" "ingest_lambda_logs" {
 }
 
 resource "aws_lambda_function" "s3_ingest" {
-  function_name    = "${var.project_name}-${var.environment}-s3-ingest-router"
-  role             = aws_iam_role.ingest_lambda_role.arn
-  handler          = "s3_ingest_lambda_function.lambda_handler"
-  runtime          = "python3.12"
-  architectures    = ["arm64"]
-  memory_size      = 128
-  timeout          = 30
+  function_name = "${var.project_name}-${var.environment}-s3-ingest-router"
+  role          = aws_iam_role.ingest_lambda_role.arn
+  handler       = "s3_ingest_lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  architectures = ["arm64"]
+  memory_size   = 128
+  timeout       = 30
 
   filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256 
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   environment {
     variables = {

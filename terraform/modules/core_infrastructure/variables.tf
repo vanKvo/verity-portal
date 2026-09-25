@@ -52,3 +52,9 @@ variable "vpc_security_group_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "sns_topic_arn" {
+  description = "ARN of the SNS topic used to publish ingestion failure / email alert notifications."
+  type        = string
+  default     = ""
+}

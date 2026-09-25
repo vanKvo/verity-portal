@@ -48,3 +48,9 @@ variable "database_password" {
   sensitive   = true
   default     = ""
 }
+
+variable "sns_topic_arn" {
+  description = "ARN of the SNS topic used to publish ingestion failure / email alert notifications."
+  type        = string
+  default     = ""
+}

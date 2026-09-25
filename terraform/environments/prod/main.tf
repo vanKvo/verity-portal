@@ -19,9 +19,9 @@ resource "aws_internet_gateway" "igw" {
 
 # --- 1. Public Subnets (For Routing / Internet Access) ---
 resource "aws_subnet" "subnet_public_a" {
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1a"
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 
   tags = {
@@ -30,9 +30,9 @@ resource "aws_subnet" "subnet_public_a" {
 }
 
 resource "aws_subnet" "subnet_public_b" {
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-east-1b"
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "us-east-1b"
   map_public_ip_on_launch = true
 
   tags = {
@@ -42,9 +42,9 @@ resource "aws_subnet" "subnet_public_b" {
 
 # --- 2. Private Application Subnets (For Lambda & SSM Tunnel Host) ---
 resource "aws_subnet" "subnet_private_app_a" {
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "us-east-1a"
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = "10.0.3.0/24"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = false
 
   tags = {
@@ -53,9 +53,9 @@ resource "aws_subnet" "subnet_private_app_a" {
 }
 
 resource "aws_subnet" "subnet_private_app_b" {
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = "10.0.4.0/24"
-  availability_zone = "us-east-1b"
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = "10.0.4.0/24"
+  availability_zone       = "us-east-1b"
   map_public_ip_on_launch = false
 
   tags = {
@@ -65,9 +65,9 @@ resource "aws_subnet" "subnet_private_app_b" {
 
 # --- 3. Isolated Database Subnets (For RDS Instance) ---
 resource "aws_subnet" "subnet_private_db_a" {
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = "10.0.5.0/24"
-  availability_zone = "us-east-1a"
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = "10.0.5.0/24"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = false
 
   tags = {
@@ -76,9 +76,9 @@ resource "aws_subnet" "subnet_private_db_a" {
 }
 
 resource "aws_subnet" "subnet_private_db_b" {
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = "10.0.6.0/24"
-  availability_zone = "us-east-1b"
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = "10.0.6.0/24"
+  availability_zone       = "us-east-1b"
   map_public_ip_on_launch = false
 
   tags = {
@@ -356,7 +356,7 @@ resource "aws_secretsmanager_secret" "db_credentials" {
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials_val" {
-  secret_id     = aws_secretsmanager_secret.db_credentials.id
+  secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
     username = "verity_user"
     password = var.database_password
@@ -565,11 +565,11 @@ data "aws_ami" "amazon_linux_2023" {
 
 # Provision Bastion Instance
 resource "aws_instance" "bastion" {
-  ami                  = data.aws_ami.amazon_linux_2023.id
-  instance_type        = "t4g.nano"
-  subnet_id            = aws_subnet.subnet_private_app_a.id
+  ami                    = data.aws_ami.amazon_linux_2023.id
+  instance_type          = "t4g.nano"
+  subnet_id              = aws_subnet.subnet_private_app_a.id
   vpc_security_group_ids = [aws_security_group.bastion_sg.id]
-  iam_instance_profile = aws_iam_instance_profile.bastion_profile.name
+  iam_instance_profile   = aws_iam_instance_profile.bastion_profile.name
 
   tags = {
     Name = "${var.project_name}-${var.environment}-bastion"
