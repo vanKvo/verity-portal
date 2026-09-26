@@ -1,0 +1,65 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: verity-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: verity_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - verity_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d verity_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot alembic upgrade head, waits for db healthy
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/verity_db
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["poetry", "run", "alembic", "upgrade", "head"]
+
+  # Since the build context/Dockerfile for migrate and backend services are identical, it builds the image once and reuses it for both services
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: verity-backend
+    env_file:
+      - ./backend/.env
+    environment:
+      # Overrides the .env value so the backend reaches the "db" service by
+      # its Compose network name instead of localhost.
+      DATABASE_URL: postgresql://user:password@db:5432/verity_db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/src:/app/src
+    depends_on:
+      migrate:
+        condition: service_completed_successfully # it's a built-in Compose Spec value for depends_on.<service>.condition (the official schema at compose-spec.github.io defines exactly four: service_started, service_healthy, service_completed_successfully, service_failed)
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: verity-frontend
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend
+
+volumes:
+  verity_db_data:
